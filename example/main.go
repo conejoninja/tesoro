@@ -28,9 +28,6 @@ func main() {
 		fmt.Println("No TREZOR devices found, make sure your TREZOR device is connected")
 	} else {
 		fmt.Printf("Found %d TREZOR devices connected\n", numberDevices)
-		//c.Initialize()
-		c.Ping("hola")
-		c.GetAddress()
 		shell(c)
 		defer c.CloseTransport()
 	}
@@ -53,10 +50,30 @@ out:
 		if err != nil {
 			break
 		}
-		line = strings.ToLower(line)
-		if line != "" {
-			c.PinMatrixAck(line)
-			continue out
+		args := strings.Split(strings.ToLower(line), " ")
+
+		str := ""
+
+		switch args[0] {
+		case "ping":
+			if len(args) < 2 {
+				str = "Missing parameters"
+			} else {
+				str, _ = c.Ping(strings.Join(args[1:], " "))
+			}
+			break
+		case "getaddress":
+			str, _ = c.GetAddress()
+			break
+		default:
+			str = "Unknown command"
+			break
 		}
+
+		if str != "" {
+			fmt.Println(str)
+		}
+
+		continue out
 	}
 }
