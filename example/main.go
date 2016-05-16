@@ -64,6 +64,23 @@ out:
 				str, msgType = c.Ping(strings.Join(args[1:], " "))
 			}
 			break
+		case "signmessage":
+			if len(args) < 2 {
+				str = "Missing parameters"
+				msgType = 999
+			} else {
+				str, msgType = c.SignMessage([]byte(strings.Join(args[1:], " ")))
+				str, msgType = c.ButtonAck()
+				for {
+					s, m := c.Read()
+					if m != 999 {
+						msgType = m
+						str = s
+						break
+					}
+				}
+			}
+			break
 		case "getaddress":
 			str, msgType = c.GetAddress()
 			break

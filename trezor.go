@@ -5,6 +5,8 @@ import (
 
 	"strconv"
 
+	"fmt"
+
 	"github.com/conejoninja/trezor/pb/messages"
 	"github.com/conejoninja/trezor/transport"
 	"github.com/golang/protobuf/proto"
@@ -106,9 +108,44 @@ func (c *TrezorClient) GetAddress() (string, uint16) {
 	return c.Read()
 }
 
+func (c *TrezorClient) SignMessage(message []byte) (string, uint16) {
+	bitcoin := "Bitcoin"
+	var m messages.SignMessage
+	//m.AddressN = []uint32{}
+	m.CoinName = &bitcoin
+	m.Message = message
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		return "ERROR Marshalling", 999
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_SignMessage"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	c.t.Write(msg)
+	return c.Read()
+}
+
+func (c *TrezorClient) ButtonAck() (string, uint16) {
+	var m messages.ButtonAck
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		return "ERROR Marshalling", 999
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ButtonAck"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	c.t.Write(msg)
+	return c.Read()
+}
+
 func (c *TrezorClient) Read() (string, uint16) {
 	marshalled, msgType, msgLength, err := c.t.Read()
 	if err != nil {
+		fmt.Println(err)
 		return "Error reading", 999
 	}
 	if msgLength <= 0 {
@@ -139,6 +176,14 @@ func (c *TrezorClient) Read() (string, uint16) {
 			str = "Error unmarshalling (18)"
 		} else {
 			str = "Please enter current PIN:"
+		}
+	} else if msgType == 26 {
+		var msg messages.ButtonRequest
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (26)"
+		} else {
+			str = "--->>" + msg.GetData() + "<<------>>" + msg.String() + "<<---"
 		}
 	} else if msgType == 30 {
 		var msg messages.Address

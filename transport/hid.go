@@ -43,7 +43,7 @@ func (t *TransportHID) Write(msg []byte) {
 }
 
 func (t *TransportHID) Read() ([]byte, uint16, int, error) {
-	buf, err := t.device.Read(5 * time.Second)
+	buf, err := t.device.Read(1 * time.Second)
 	var marshalled []byte
 
 	bufLength := len(buf)
