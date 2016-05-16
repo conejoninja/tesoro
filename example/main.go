@@ -34,6 +34,7 @@ func main() {
 }
 
 func shell(c trezor.TrezorClient) {
+	var msgType uint16
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt: ">",
 	})
@@ -58,15 +59,21 @@ out:
 		case "ping":
 			if len(args) < 2 {
 				str = "Missing parameters"
+				msgType = 999
 			} else {
-				str, _ = c.Ping(strings.Join(args[1:], " "))
+				str, msgType = c.Ping(strings.Join(args[1:], " "))
 			}
 			break
 		case "getaddress":
-			str, _ = c.GetAddress()
+			str, msgType = c.GetAddress()
 			break
 		default:
-			str = "Unknown command"
+			if msgType == 18 { // PIN INPUT
+				str, msgType = c.PinMatrixAck(line)
+			} else {
+				str = "Unknown command"
+				msgType = 999
+			}
 			break
 		}
 
