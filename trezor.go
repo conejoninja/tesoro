@@ -36,22 +36,21 @@ func (c *TrezorClient) Header(msgType int, msg []byte) []byte {
 	return append(typebuf, msgbuf...)
 }
 
-func (c *TrezorClient) Initialize() (string, uint16) {
+func (c *TrezorClient) Initialize() {
 	var m messages.Initialize
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
-		return "ERROR Marshalling", 999
+		fmt.Println("ERROR Marshalling")
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_Initialize"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	c.t.Write(msg)
-	return c.Read()
 }
 
-func (c *TrezorClient) Ping(str string) (string, uint16) {
+func (c *TrezorClient) Ping(str string) {
 	var m messages.Ping
 	ffalse := false
 	m.Message = &str
@@ -61,34 +60,31 @@ func (c *TrezorClient) Ping(str string) (string, uint16) {
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
-		return "ERROR Marshalling", 999
+		fmt.Println("ERROR Marshalling")
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_Ping"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	c.t.Write(msg)
-	return c.Read()
-
 }
 
-func (c *TrezorClient) PinMatrixAck(str string) (string, uint16) {
+func (c *TrezorClient) PinMatrixAck(str string) {
 	var m messages.PinMatrixAck
 	m.Pin = &str
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
-		return "ERROR Marshalling", 999
+		fmt.Println("ERROR Marshalling")
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_PinMatrixAck"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	c.t.Write(msg)
-	return c.Read()
 }
 
-func (c *TrezorClient) GetAddress() (string, uint16) {
+func (c *TrezorClient) GetAddress() {
 	ttrue := false
 	bitcoin := "Bitcoin"
 	var m messages.GetAddress
@@ -98,17 +94,16 @@ func (c *TrezorClient) GetAddress() (string, uint16) {
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
-		return "ERROR Marshalling", 999
+		fmt.Println("ERROR Marshalling")
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_GetAddress"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	c.t.Write(msg)
-	return c.Read()
 }
 
-func (c *TrezorClient) SignMessage(message []byte) (string, uint16) {
+func (c *TrezorClient) SignMessage(message []byte) {
 	bitcoin := "Bitcoin"
 	var m messages.SignMessage
 	//m.AddressN = []uint32{}
@@ -117,39 +112,38 @@ func (c *TrezorClient) SignMessage(message []byte) (string, uint16) {
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
-		return "ERROR Marshalling", 999
+		fmt.Println("ERROR Marshalling")
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_SignMessage"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	c.t.Write(msg)
-	return c.Read()
 }
 
-func (c *TrezorClient) ButtonAck() (string, uint16) {
+func (c *TrezorClient) ButtonAck() {
 	var m messages.ButtonAck
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
-		return "ERROR Marshalling", 999
+		fmt.Println("ERROR Marshalling")
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ButtonAck"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	c.t.Write(msg)
-	return c.Read()
 }
 
 func (c *TrezorClient) Read() (string, uint16) {
 	marshalled, msgType, msgLength, err := c.t.Read()
 	if err != nil {
-		fmt.Println(err)
+		//fmt.Println(err)
 		return "Error reading", 999
 	}
 	if msgLength <= 0 {
-		return "", 999
+		fmt.Println("Empty message", msgType)
+		return "", msgType
 	}
 
 	str := "Uncaught message type " + strconv.Itoa(int(msgType))
@@ -183,7 +177,7 @@ func (c *TrezorClient) Read() (string, uint16) {
 		if err != nil {
 			str = "Error unmarshalling (26)"
 		} else {
-			str = "--->>" + msg.GetData() + "<<------>>" + msg.String() + "<<---"
+			str = "Action required on TREZOR device"
 		}
 	} else if msgType == 30 {
 		var msg messages.Address
@@ -192,6 +186,19 @@ func (c *TrezorClient) Read() (string, uint16) {
 			str = "Error unmarshalling (30)"
 		} else {
 			str = msg.GetAddress()
+		}
+	} else if msgType == 40 {
+		var msg messages.MessageSignature
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (40)"
+		} else {
+			fmt.Println(string(msg.GetSignature()))
+			fmt.Println(msg.GetAddress())
+			fmt.Println(msg.String())
+			fmt.Println(msg.XXX_unrecognized)
+			fmt.Println(string(msg.XXX_unrecognized))
+			str = string(msg.GetSignature())
 		}
 	}
 	return str, msgType

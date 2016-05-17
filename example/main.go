@@ -45,59 +45,72 @@ func shell(c trezor.TrezorClient) {
 	defer rl.Close()
 	log.SetOutput(rl.Stderr())
 
-out:
+	inputLine := true
 	for {
-		line, err := rl.Readline()
-		if err != nil {
-			break
-		}
-		args := strings.Split(strings.ToLower(line), " ")
-
-		str := ""
-
-		switch args[0] {
-		case "ping":
-			if len(args) < 2 {
-				str = "Missing parameters"
-				msgType = 999
-			} else {
-				str, msgType = c.Ping(strings.Join(args[1:], " "))
+		if inputLine {
+			line, err := rl.Readline()
+			if err != nil {
+				fmt.Println("ERR", err)
+				break
 			}
-			break
-		case "signmessage":
-			if len(args) < 2 {
-				str = "Missing parameters"
-				msgType = 999
-			} else {
-				str, msgType = c.SignMessage([]byte(strings.Join(args[1:], " ")))
-				str, msgType = c.ButtonAck()
-				for {
-					s, m := c.Read()
-					if m != 999 {
-						msgType = m
-						str = s
+			args := strings.Split(strings.ToLower(line), " ")
+
+			switch args[0] {
+			case "ping":
+				if len(args) < 2 {
+					fmt.Println("Missing parameters")
+				} else {
+					c.Ping(strings.Join(args[1:], " "))
+					inputLine = false
+				}
+				break
+			case "signmessage":
+				if len(args) < 2 {
+					fmt.Println("Missing parameters")
+				} else {
+					c.SignMessage([]byte(strings.Join(args[1:], " ")))
+					inputLine = false
+				}
+				break
+			case "getaddress":
+				c.GetAddress()
+				inputLine = false
+				break
+			default:
+				if msgType == 18 { // PIN INPUT
+					c.PinMatrixAck(line)
+					inputLine = false
+				} else {
+					fmt.Println("Unknown command")
+					msgType = 999
+				}
+				break
+			}
+		} else {
+			var str string
+			for {
+				str, msgType = c.Read()
+				if msgType != 999 { //timeout
+					inputLine = true
+					switch msgType {
+					case 18: // PIN REQUEST
+						//inputLine = false
+						break
+					case 26: // BUTTON REQUEST
+						c.ButtonAck()
+						inputLine = false
+						break
+					default:
 						break
 					}
+					break
 				}
 			}
-			break
-		case "getaddress":
-			str, msgType = c.GetAddress()
-			break
-		default:
-			if msgType == 18 { // PIN INPUT
-				str, msgType = c.PinMatrixAck(line)
-			} else {
-				str = "Unknown command"
-				msgType = 999
+
+			if str != "" {
+				fmt.Println(str, msgType)
 			}
-			break
-		}
 
-		if str != "" {
-			fmt.Println(str)
 		}
-
-		continue out
 	}
 }

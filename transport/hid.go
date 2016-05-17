@@ -6,6 +6,8 @@ import (
 	"math"
 	"time"
 
+	"fmt"
+
 	"github.com/zserge/hid"
 )
 
@@ -30,6 +32,7 @@ func (t *TransportHID) Write(msg []byte) {
 		l := int(math.Min(63, float64(len(msg))))
 		tmp := append([]byte{63}, msg[:l]...)
 		copy(blank, tmp)
+		fmt.Println("WRITE", blank)
 		n, err := t.device.Write(blank, 1*time.Second)
 
 		if err == nil && n > 0 {
@@ -43,7 +46,7 @@ func (t *TransportHID) Write(msg []byte) {
 }
 
 func (t *TransportHID) Read() ([]byte, uint16, int, error) {
-	buf, err := t.device.Read(1 * time.Second)
+	buf, err := t.device.Read(100 * time.Millisecond)
 	var marshalled []byte
 
 	bufLength := len(buf)
@@ -52,22 +55,25 @@ func (t *TransportHID) Read() ([]byte, uint16, int, error) {
 		if buf[i] == 35 && buf[i+1] == 35 {
 			msgType := binary.BigEndian.Uint16(buf[i+2 : i+4])
 			msgLength := int(binary.BigEndian.Uint32(buf[i+4 : i+8]))
+			originalMsgLength := msgLength
 
 			if (bufLength - i - 8) < msgLength {
 				marshalled = buf[i+8:]
-				msgLength = msgLength - i - 8
+				msgLength = msgLength - (len(buf) - i - 8)
 				for msgLength > 0 {
-					buf, err = t.device.Read(5 * time.Second)
+					buf, err = t.device.Read(100 * time.Millisecond)
 					bufLength = len(buf)
-					l := int(math.Min(float64(bufLength-1), float64(msgLength)))
-					marshalled = append(marshalled, buf[1:l+1]...)
-					msgLength = msgLength - l
+					if bufLength > 0 {
+						l := int(math.Min(float64(bufLength-1), float64(msgLength)))
+						marshalled = append(marshalled, buf[1:l+1]...)
+						msgLength = msgLength - l
+					}
 				}
 			} else {
 				marshalled = buf[i+8 : i+8+msgLength]
 			}
 
-			return marshalled, msgType, msgLength, nil
+			return marshalled, msgType, originalMsgLength, nil
 		}
 	}
 	return marshalled, 0, 0, err
