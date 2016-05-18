@@ -7,11 +7,19 @@ import (
 
 	"fmt"
 
+	"encoding/json"
+
 	"github.com/conejoninja/trezor/pb/messages"
 	"github.com/conejoninja/trezor/transport"
 	"github.com/golang/protobuf/proto"
 	"github.com/zserge/hid"
 )
+
+type SignMessage struct {
+	Message   string `json:"message"`
+	Address   string `json:"address"`
+	Signature []byte `json:"signature"`
+}
 
 type TrezorClient struct {
 	t transport.TransportHID
@@ -36,7 +44,7 @@ func (c *TrezorClient) Header(msgType int, msg []byte) []byte {
 	return append(typebuf, msgbuf...)
 }
 
-func (c *TrezorClient) Initialize() {
+func (c *TrezorClient) Initialize() []byte {
 	var m messages.Initialize
 	marshalled, err := proto.Marshal(&m)
 
@@ -47,10 +55,10 @@ func (c *TrezorClient) Initialize() {
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_Initialize"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
-	c.t.Write(msg)
+	return msg
 }
 
-func (c *TrezorClient) Ping(str string) {
+func (c *TrezorClient) Ping(str string) []byte {
 	var m messages.Ping
 	ffalse := false
 	m.Message = &str
@@ -66,10 +74,10 @@ func (c *TrezorClient) Ping(str string) {
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_Ping"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
-	c.t.Write(msg)
+	return msg
 }
 
-func (c *TrezorClient) PinMatrixAck(str string) {
+func (c *TrezorClient) PinMatrixAck(str string) []byte {
 	var m messages.PinMatrixAck
 	m.Pin = &str
 	marshalled, err := proto.Marshal(&m)
@@ -81,10 +89,10 @@ func (c *TrezorClient) PinMatrixAck(str string) {
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_PinMatrixAck"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
-	c.t.Write(msg)
+	return msg
 }
 
-func (c *TrezorClient) GetAddress() {
+func (c *TrezorClient) GetAddress() []byte {
 	ttrue := false
 	bitcoin := "Bitcoin"
 	var m messages.GetAddress
@@ -100,10 +108,10 @@ func (c *TrezorClient) GetAddress() {
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_GetAddress"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
-	c.t.Write(msg)
+	return msg
 }
 
-func (c *TrezorClient) SignMessage(message []byte) {
+func (c *TrezorClient) SignMessage(message []byte) []byte {
 	bitcoin := "Bitcoin"
 	var m messages.SignMessage
 	//m.AddressN = []uint32{}
@@ -118,10 +126,10 @@ func (c *TrezorClient) SignMessage(message []byte) {
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_SignMessage"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
-	c.t.Write(msg)
+	return msg
 }
 
-func (c *TrezorClient) ButtonAck() {
+func (c *TrezorClient) ButtonAck() []byte {
 	var m messages.ButtonAck
 	marshalled, err := proto.Marshal(&m)
 
@@ -132,7 +140,26 @@ func (c *TrezorClient) ButtonAck() {
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ButtonAck"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
+	return msg
+}
+
+func (c *TrezorClient) Call(msg []byte) (string, uint16) {
 	c.t.Write(msg)
+	return c.ReadUntil()
+}
+
+func (c *TrezorClient) ReadUntil() (string, uint16) {
+	var str string
+	var msgType uint16
+	for {
+		str, msgType = c.Read()
+		if msgType != 999 { //timeout
+			fmt.Println("READUNTIL", msgType)
+			break
+		}
+	}
+
+	return str, msgType
 }
 
 func (c *TrezorClient) Read() (string, uint16) {
@@ -193,12 +220,11 @@ func (c *TrezorClient) Read() (string, uint16) {
 		if err != nil {
 			str = "Error unmarshalling (40)"
 		} else {
-			fmt.Println(string(msg.GetSignature()))
-			fmt.Println(msg.GetAddress())
-			fmt.Println(msg.String())
-			fmt.Println(msg.XXX_unrecognized)
-			fmt.Println(string(msg.XXX_unrecognized))
-			str = string(msg.GetSignature())
+			sm := &SignMessage{
+				Address:   msg.GetAddress(),
+				Signature: msg.GetSignature()}
+			smJSON, _ := json.Marshal(sm)
+			str = string(smJSON)
 		}
 	}
 	return str, msgType
