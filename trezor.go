@@ -2,12 +2,13 @@ package trezor
 
 import (
 	"encoding/binary"
-
+	"encoding/json"
+	"fmt"
 	"strconv"
 
-	"fmt"
+	"golang.org/x/text/unicode/norm"
 
-	"encoding/json"
+	"encoding/base64"
 
 	"github.com/conejoninja/trezor/pb/messages"
 	"github.com/conejoninja/trezor/transport"
@@ -112,11 +113,8 @@ func (c *TrezorClient) GetAddress() []byte {
 }
 
 func (c *TrezorClient) SignMessage(message []byte) []byte {
-	bitcoin := "Bitcoin"
 	var m messages.SignMessage
-	//m.AddressN = []uint32{}
-	m.CoinName = &bitcoin
-	m.Message = message
+	m.Message = norm.NFC.Bytes(message)
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
@@ -124,6 +122,29 @@ func (c *TrezorClient) SignMessage(message []byte) []byte {
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_SignMessage"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *TrezorClient) VerifyMessage(address, signature string, message []byte) []byte {
+
+	sign, err := base64.StdEncoding.DecodeString(signature)
+	if err != nil {
+		return []byte("Wrong signature")
+	}
+
+	var m messages.VerifyMessage
+	m.Address = &address
+	m.Signature = sign
+	m.Message = norm.NFC.Bytes(message)
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_VerifyMessage"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -154,7 +175,6 @@ func (c *TrezorClient) ReadUntil() (string, uint16) {
 	for {
 		str, msgType = c.Read()
 		if msgType != 999 { //timeout
-			fmt.Println("READUNTIL", msgType)
 			break
 		}
 	}

@@ -38,6 +38,8 @@ func (t *TransportHID) Write(msg []byte) {
 			} else {
 				msg = msg[63:]
 			}
+		} else {
+			break
 		}
 	}
 }
@@ -73,5 +75,5 @@ func (t *TransportHID) Read() ([]byte, uint16, int, error) {
 			return marshalled, msgType, originalMsgLength, nil
 		}
 	}
-	return marshalled, 0, 0, err
+	return marshalled, 999, 0, err
 }

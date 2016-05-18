@@ -5,8 +5,6 @@ import (
 	"log"
 	"strings"
 
-	"encoding/json"
-
 	"github.com/chzyer/readline"
 	"github.com/conejoninja/trezor"
 	"github.com/zserge/hid"
@@ -54,9 +52,9 @@ func shell(c trezor.TrezorClient) {
 			fmt.Println("ERR", err)
 			break
 		}
-		args := strings.Split(strings.ToLower(line), " ")
+		args := strings.Split(line, " ")
 
-		switch args[0] {
+		switch strings.ToLower(args[0]) {
 		case "ping":
 			if len(args) < 2 {
 				fmt.Println("Missing parameters")
@@ -70,7 +68,7 @@ func shell(c trezor.TrezorClient) {
 			} else {
 				msg := strings.Join(args[1:], " ")
 				str, msgType = c.Call(c.SignMessage([]byte(msg)))
-				if msgType == 26 {
+				/*if msgType == 26 {
 					str, msgType = c.Call(c.ButtonAck())
 					var sm trezor.SignMessage
 					err = json.Unmarshal([]byte(str), &sm)
@@ -79,7 +77,14 @@ func shell(c trezor.TrezorClient) {
 					}
 					smJSON, _ := json.Marshal(sm)
 					str = string(smJSON)
-				}
+				}*/
+			}
+			break
+		case "verifymessage":
+			if len(args) < 4 {
+				fmt.Println("Missing parameters")
+			} else {
+				str, msgType = c.Call(c.VerifyMessage(args[1], args[2], []byte(args[3])))
 			}
 			break
 		case "getaddress":
@@ -96,5 +101,9 @@ func shell(c trezor.TrezorClient) {
 			break
 		}
 		fmt.Println(str, msgType)
+		if msgType == 26 {
+			str, msgType = c.Call(c.ButtonAck())
+			fmt.Println(str, msgType)
+		}
 	}
 }
