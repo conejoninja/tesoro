@@ -6,13 +6,13 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
-	"github.com/conejoninja/trezor"
+	"github.com/conejoninja/tesoro"
 	"github.com/zserge/hid"
 )
 
 func main() {
 
-	var c trezor.TrezorClient
+	var c tesoro.Client
 
 	numberDevices := 0
 	hid.UsbWalk(func(device hid.Device) {
@@ -25,7 +25,7 @@ func main() {
 		}
 	})
 	if numberDevices == 0 {
-		fmt.Println("No TREZOR devices found, make sure your TREZOR device is connected")
+		fmt.Println("No TREZOR devices found, make sure your device is connected")
 	} else {
 		fmt.Printf("Found %d TREZOR devices connected\n", numberDevices)
 		shell(c)
@@ -33,7 +33,7 @@ func main() {
 	}
 }
 
-func shell(c trezor.TrezorClient) {
+func shell(c tesoro.Client) {
 	var str string
 	var msgType uint16
 	rl, err := readline.NewEx(&readline.Config{
@@ -68,16 +68,6 @@ func shell(c trezor.TrezorClient) {
 			} else {
 				msg := strings.Join(args[1:], " ")
 				str, msgType = c.Call(c.SignMessage([]byte(msg)))
-				/*if msgType == 26 {
-					str, msgType = c.Call(c.ButtonAck())
-					var sm trezor.SignMessage
-					err = json.Unmarshal([]byte(str), &sm)
-					if err == nil {
-						sm.Message = msg
-					}
-					smJSON, _ := json.Marshal(sm)
-					str = string(smJSON)
-				}*/
 			}
 			break
 		case "verifymessage":

@@ -1,4 +1,4 @@
-package trezor
+package tesoro
 
 import (
 	"encoding/binary"
@@ -10,8 +10,8 @@ import (
 
 	"encoding/base64"
 
-	"github.com/conejoninja/trezor/pb/messages"
-	"github.com/conejoninja/trezor/transport"
+	"github.com/conejoninja/tesoro/pb/messages"
+	"github.com/conejoninja/tesoro/transport"
 	"github.com/golang/protobuf/proto"
 	"github.com/zserge/hid"
 )
@@ -22,19 +22,19 @@ type SignMessage struct {
 	Signature []byte `json:"signature"`
 }
 
-type TrezorClient struct {
+type Client struct {
 	t transport.TransportHID
 }
 
-func (c *TrezorClient) SetTransport(device hid.Device) {
+func (c *Client) SetTransport(device hid.Device) {
 	c.t.SetDevice(device)
 }
 
-func (c *TrezorClient) CloseTransport() {
+func (c *Client) CloseTransport() {
 	c.t.Close()
 }
 
-func (c *TrezorClient) Header(msgType int, msg []byte) []byte {
+func (c *Client) Header(msgType int, msg []byte) []byte {
 
 	typebuf := make([]byte, 2)
 	binary.BigEndian.PutUint16(typebuf, uint16(msgType))
@@ -45,7 +45,7 @@ func (c *TrezorClient) Header(msgType int, msg []byte) []byte {
 	return append(typebuf, msgbuf...)
 }
 
-func (c *TrezorClient) Initialize() []byte {
+func (c *Client) Initialize() []byte {
 	var m messages.Initialize
 	marshalled, err := proto.Marshal(&m)
 
@@ -59,7 +59,7 @@ func (c *TrezorClient) Initialize() []byte {
 	return msg
 }
 
-func (c *TrezorClient) Ping(str string) []byte {
+func (c *Client) Ping(str string) []byte {
 	var m messages.Ping
 	ffalse := false
 	m.Message = &str
@@ -78,7 +78,7 @@ func (c *TrezorClient) Ping(str string) []byte {
 	return msg
 }
 
-func (c *TrezorClient) PinMatrixAck(str string) []byte {
+func (c *Client) PinMatrixAck(str string) []byte {
 	var m messages.PinMatrixAck
 	m.Pin = &str
 	marshalled, err := proto.Marshal(&m)
@@ -93,7 +93,7 @@ func (c *TrezorClient) PinMatrixAck(str string) []byte {
 	return msg
 }
 
-func (c *TrezorClient) GetAddress() []byte {
+func (c *Client) GetAddress() []byte {
 	ttrue := false
 	bitcoin := "Bitcoin"
 	var m messages.GetAddress
@@ -112,7 +112,7 @@ func (c *TrezorClient) GetAddress() []byte {
 	return msg
 }
 
-func (c *TrezorClient) SignMessage(message []byte) []byte {
+func (c *Client) SignMessage(message []byte) []byte {
 	var m messages.SignMessage
 	m.Message = norm.NFC.Bytes(message)
 	marshalled, err := proto.Marshal(&m)
@@ -127,7 +127,7 @@ func (c *TrezorClient) SignMessage(message []byte) []byte {
 	return msg
 }
 
-func (c *TrezorClient) VerifyMessage(address, signature string, message []byte) []byte {
+func (c *Client) VerifyMessage(address, signature string, message []byte) []byte {
 
 	sign, err := base64.StdEncoding.DecodeString(signature)
 	if err != nil {
@@ -150,7 +150,7 @@ func (c *TrezorClient) VerifyMessage(address, signature string, message []byte) 
 	return msg
 }
 
-func (c *TrezorClient) ButtonAck() []byte {
+func (c *Client) ButtonAck() []byte {
 	var m messages.ButtonAck
 	marshalled, err := proto.Marshal(&m)
 
@@ -164,12 +164,12 @@ func (c *TrezorClient) ButtonAck() []byte {
 	return msg
 }
 
-func (c *TrezorClient) Call(msg []byte) (string, uint16) {
+func (c *Client) Call(msg []byte) (string, uint16) {
 	c.t.Write(msg)
 	return c.ReadUntil()
 }
 
-func (c *TrezorClient) ReadUntil() (string, uint16) {
+func (c *Client) ReadUntil() (string, uint16) {
 	var str string
 	var msgType uint16
 	for {
@@ -182,7 +182,7 @@ func (c *TrezorClient) ReadUntil() (string, uint16) {
 	return str, msgType
 }
 
-func (c *TrezorClient) Read() (string, uint16) {
+func (c *Client) Read() (string, uint16) {
 	marshalled, msgType, msgLength, err := c.t.Read()
 	if err != nil {
 		//fmt.Println(err)

@@ -1,6 +1,6 @@
-TREZOR
+TESORO
 ======
-Library in Go (golang) to work with [TREZOR devices](http://bitcointrezor.com/). This repository is about an unofficial library written in Go to work with TREZOR, for any official library, code or tool, please go to the official [TREZOR repository](https://github.com/trezor)
+Go package to work with [TREZOR devices](http://bitcointrezor.com/). This repository is an unofficial package written in Go (golang), for any official package, code or tool, please go to the official [TREZOR repository](https://github.com/trezor)
 
 ## What is TREZOR?
 
@@ -9,14 +9,11 @@ TREZOR is a single purpose device which allows you to make secure Bitcoin transa
 
 ## Installation
 ```bash
-$ go get github.com/conejoninja/trezor
+$ go get github.com/conejoninja/tesoro
 ```
 
 ## Documentation
 None yet, it's a work in progress
-
-## About the name
-I could have possible named the project "golang-trezor" or "go-trezor" or something similar, but when using it in a go project it's redundant to load libraries with "go" or "golang" in their name.
 
 ## Notes
 I wouldn't use for anything serious or important, it's still in development.  

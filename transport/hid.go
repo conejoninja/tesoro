@@ -45,7 +45,7 @@ func (t *TransportHID) Write(msg []byte) {
 }
 
 func (t *TransportHID) Read() ([]byte, uint16, int, error) {
-	buf, err := t.device.Read(100 * time.Millisecond)
+	buf, err := t.device.Read(-1, 100*time.Millisecond)
 	var marshalled []byte
 
 	bufLength := len(buf)
@@ -60,7 +60,7 @@ func (t *TransportHID) Read() ([]byte, uint16, int, error) {
 				marshalled = buf[i+8:]
 				msgLength = msgLength - (len(buf) - i - 8)
 				for msgLength > 0 {
-					buf, err = t.device.Read(100 * time.Millisecond)
+					buf, err = t.device.Read(-1, 100*time.Millisecond)
 					bufLength = len(buf)
 					if bufLength > 0 {
 						l := int(math.Min(float64(bufLength-1), float64(msgLength)))
