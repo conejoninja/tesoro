@@ -10,11 +10,15 @@ import (
 
 	"encoding/base64"
 
+	"strings"
+
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/transport"
 	"github.com/golang/protobuf/proto"
 	"github.com/zserge/hid"
 )
+
+const hardkey uint32 = 2147483648
 
 type SignMessage struct {
 	Message   string `json:"message"`
@@ -107,6 +111,22 @@ func (c *Client) GetAddress() []byte {
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_GetAddress"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) GetPublicKey() []byte {
+	var m messages.GetPublicKey
+	m.AddressN = StringToBIP32Path("m/44'/0'/0'")
+	//m.AddressN = []uint32{hardened(44), hardened(0), hardened(0)} //default key for account #1
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_GetPublicKey"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -210,6 +230,14 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = msg.GetMessage()
 		}
+	} else if msgType == 12 {
+		var msg messages.PublicKey
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (12)"
+		} else {
+			str = msg.GetXpub()
+		}
 	} else if msgType == 18 {
 		var msg messages.PinMatrixRequest
 		err = proto.Unmarshal(marshalled, &msg)
@@ -248,4 +276,37 @@ func (c *Client) Read() (string, uint16) {
 		}
 	}
 	return str, msgType
+}
+
+func BIP32Path(keys []uint32) string {
+	path := "m"
+	for _, key := range keys {
+		path += "/"
+		if key < hardkey {
+			path += string(key)
+		} else {
+
+			path += string(key-hardkey) + "'"
+		}
+	}
+	return path
+}
+
+func StringToBIP32Path(str string) []uint32 {
+
+	keys := strings.Split(str, "/")
+	path := make([]uint32, len(keys)-1)
+	for k := 1; k < len(keys); k++ {
+		i, _ := strconv.Atoi(strings.Replace(keys[k], "'", "", -1))
+		if strings.Contains(keys[k], "'") {
+			path[k-1] = hardened(uint32(i))
+		} else {
+			path[k-1] = uint32(i)
+		}
+	}
+	return path
+}
+
+func hardened(key uint32) uint32 {
+	return hardkey + key
 }

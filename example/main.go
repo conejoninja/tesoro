@@ -80,6 +80,9 @@ func shell(c tesoro.Client) {
 		case "getaddress":
 			str, msgType = c.Call(c.GetAddress())
 			break
+		case "getpublickey":
+			str, msgType = c.Call(c.GetPublicKey())
+			break
 		default:
 			if msgType == 18 { // PIN INPUT
 				str, msgType = c.Call(c.PinMatrixAck(line))
