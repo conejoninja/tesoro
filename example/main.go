@@ -17,7 +17,11 @@ func main() {
 	numberDevices := 0
 	hid.UsbWalk(func(device hid.Device) {
 		info := device.Info()
+		// TREZOR
 		// 0x534c : 21324 vendor
+		// 0x0001 : 1     product
+		// KEEPKEY
+		// 0x2b24 : 11044 vendor
 		// 0x0001 : 1     product
 		if info.Vendor == 21324 && info.Product == 1 {
 			numberDevices++

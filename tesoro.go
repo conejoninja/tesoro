@@ -12,6 +12,8 @@ import (
 
 	"strings"
 
+	"regexp"
+
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/transport"
 	"github.com/golang/protobuf/proto"
@@ -294,6 +296,13 @@ func BIP32Path(keys []uint32) string {
 
 func StringToBIP32Path(str string) []uint32 {
 
+	if !ValidBip32(str) {
+		return []uint32{}
+	}
+
+	re := regexp.MustCompile("([/]+)")
+	str = re.ReplaceAllString(str, "/")
+
 	keys := strings.Split(str, "/")
 	path := make([]uint32, len(keys)-1)
 	for k := 1; k < len(keys); k++ {
@@ -305,6 +314,22 @@ func StringToBIP32Path(str string) []uint32 {
 		}
 	}
 	return path
+}
+
+func ValidBip32(path string) bool {
+	re := regexp.MustCompile("([/]+)")
+	path = re.ReplaceAllString(path, "/")
+
+	re = regexp.MustCompile("^m/")
+	path = re.ReplaceAllString(path, "")
+
+	re = regexp.MustCompile("'/")
+	path = re.ReplaceAllString(path+"/", "")
+
+	re = regexp.MustCompile("[0-9/]+")
+	path = re.ReplaceAllString(path, "")
+
+	return path == ""
 }
 
 func hardened(key uint32) uint32 {
