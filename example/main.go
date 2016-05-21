@@ -5,6 +5,8 @@ import (
 	"log"
 	"strings"
 
+	"strconv"
+
 	"github.com/chzyer/readline"
 	"github.com/conejoninja/tesoro"
 	"github.com/zserge/hid"
@@ -84,8 +86,22 @@ func shell(c tesoro.Client) {
 		case "getaddress":
 			str, msgType = c.Call(c.GetAddress())
 			break
+		case "getentropy":
+			if len(args) < 2 {
+				fmt.Println("Missing parameters")
+			} else {
+				size, _ := strconv.Atoi(args[1])
+				str, msgType = c.Call(c.GetEntropy(uint32(size)))
+			}
+			break
 		case "getpublickey":
 			str, msgType = c.Call(c.GetPublicKey())
+			break
+		case "getfeatures":
+			str, msgType = c.Call(c.GetFeatures())
+			break
+		case "changepin":
+			str, msgType = c.Call(c.ChangePin())
 			break
 		default:
 			if msgType == 18 { // PIN INPUT

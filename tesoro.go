@@ -14,6 +14,8 @@ import (
 
 	"regexp"
 
+	"encoding/hex"
+
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/transport"
 	"github.com/golang/protobuf/proto"
@@ -21,12 +23,6 @@ import (
 )
 
 const hardkey uint32 = 2147483648
-
-type SignMessage struct {
-	Message   string `json:"message"`
-	Address   string `json:"address"`
-	Signature []byte `json:"signature"`
-}
 
 type Client struct {
 	t transport.TransportHID
@@ -79,6 +75,49 @@ func (c *Client) Ping(str string) []byte {
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_Ping"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) ChangePin() []byte {
+	var m messages.ChangePin
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ChangePin"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) GetEntropy(size uint32) []byte {
+	var m messages.GetEntropy
+	m.Size = &size
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_GetEntropy"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) GetFeatures() []byte {
+	var m messages.GetFeatures
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_GetFeatures"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -232,6 +271,14 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = msg.GetMessage()
 		}
+	} else if msgType == 10 {
+		var msg messages.Entropy
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (10)"
+		} else {
+			str = hex.EncodeToString(msg.GetEntropy())
+		}
 	} else if msgType == 12 {
 		var msg messages.PublicKey
 		err = proto.Unmarshal(marshalled, &msg)
@@ -240,13 +287,29 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = msg.GetXpub()
 		}
+	} else if msgType == 17 {
+		var msg messages.Features
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (17)"
+		} else {
+			ftsJSON, _ := json.Marshal(&msg)
+			str = string(ftsJSON)
+		}
 	} else if msgType == 18 {
 		var msg messages.PinMatrixRequest
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
 			str = "Error unmarshalling (18)"
 		} else {
-			str = "Please enter current PIN:"
+			msgSubType := msg.GetType()
+			if msgSubType == 1 {
+				str = "Please enter current PIN:"
+			} else if msgSubType == 2 {
+				str = "Please enter new PIN:"
+			} else {
+				str = "Please re-enter new PIN:"
+			}
 		}
 	} else if msgType == 26 {
 		var msg messages.ButtonRequest
@@ -270,10 +333,7 @@ func (c *Client) Read() (string, uint16) {
 		if err != nil {
 			str = "Error unmarshalling (40)"
 		} else {
-			sm := &SignMessage{
-				Address:   msg.GetAddress(),
-				Signature: msg.GetSignature()}
-			smJSON, _ := json.Marshal(sm)
+			smJSON, _ := json.Marshal(&msg)
 			str = string(smJSON)
 		}
 	}
