@@ -188,6 +188,21 @@ func (c *Client) SignMessage(message []byte) []byte {
 	return msg
 }
 
+func (c *Client) SetLabel(label string) []byte {
+	var m messages.ApplySettings
+	m.Label = &label
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ApplySettings"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
 func (c *Client) VerifyMessage(address, signature string, message []byte) []byte {
 
 	sign, err := base64.StdEncoding.DecodeString(signature)

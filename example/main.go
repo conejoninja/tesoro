@@ -94,6 +94,13 @@ func shell(c tesoro.Client) {
 				str, msgType = c.Call(c.GetEntropy(uint32(size)))
 			}
 			break
+		case "setlabel":
+			if len(args) < 2 {
+				fmt.Println("Missing parameters")
+			} else {
+				str, msgType = c.Call(c.SetLabel(strings.Join(args[1:], " ")))
+			}
+			break
 		case "getpublickey":
 			str, msgType = c.Call(c.GetPublicKey())
 			break
