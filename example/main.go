@@ -114,7 +114,19 @@ func shell(c tesoro.Client) {
 			}
 			break
 		case "getpublickey":
-			str, msgType = c.Call(c.GetPublicKey())
+			var path string
+			if len(args) < 2 {
+				path = "m/44'/0'/0'"
+			} else {
+				path = string(args[1])
+			}
+
+			if !tesoro.ValidBIP32(path) {
+				fmt.Println("Invalid BIP32 path. Example: m/44'/0'/0'/0/27 ")
+			} else {
+
+				str, msgType = c.Call(c.GetPublicKey(tesoro.StringToBIP32Path(path)))
+			}
 			break
 		case "getfeatures":
 			str, msgType = c.Call(c.GetFeatures())

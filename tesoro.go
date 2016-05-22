@@ -157,10 +157,9 @@ func (c *Client) GetAddress() []byte {
 	return msg
 }
 
-func (c *Client) GetPublicKey() []byte {
+func (c *Client) GetPublicKey(address []uint32) []byte {
 	var m messages.GetPublicKey
-	m.AddressN = StringToBIP32Path("m/44'/0'/0'")
-	//m.AddressN = []uint32{hardened(44), hardened(0), hardened(0)} //default key for account #1
+	m.AddressN = address
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
@@ -175,6 +174,21 @@ func (c *Client) GetPublicKey() []byte {
 
 func (c *Client) SignMessage(message []byte) []byte {
 	var m messages.SignMessage
+	m.Message = norm.NFC.Bytes(message)
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_SignMessage"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) EncryptMessage(message []byte) []byte {
+	var m messages.EncryptMessage
 	m.Message = norm.NFC.Bytes(message)
 	marshalled, err := proto.Marshal(&m)
 
@@ -386,7 +400,7 @@ func BIP32Path(keys []uint32) string {
 
 func StringToBIP32Path(str string) []uint32 {
 
-	if !ValidBip32(str) {
+	if !ValidBIP32(str) {
 		return []uint32{}
 	}
 
@@ -406,7 +420,7 @@ func StringToBIP32Path(str string) []uint32 {
 	return path
 }
 
-func ValidBip32(path string) bool {
+func ValidBIP32(path string) bool {
 	re := regexp.MustCompile("([/]+)")
 	path = re.ReplaceAllString(path, "/")
 
