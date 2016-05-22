@@ -182,6 +182,9 @@ func shell(c tesoro.Client) {
 		case "getfeatures":
 			str, msgType = c.Call(c.GetFeatures())
 			break
+		case "clearsession":
+			str, msgType = c.Call(c.ClearSession())
+			break
 		case "changepin":
 			str, msgType = c.Call(c.ChangePin())
 			break

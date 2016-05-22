@@ -288,6 +288,20 @@ func (c *Client) ButtonAck() []byte {
 	return msg
 }
 
+func (c *Client) ClearSession() []byte {
+	var m messages.ClearSession
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ClearSession"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
 func (c *Client) Call(msg []byte) (string, uint16) {
 	c.t.Write(msg)
 	return c.ReadUntil()
