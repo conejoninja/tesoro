@@ -14,6 +14,8 @@ import (
 
 func main() {
 
+	tesoro.URIToIdentity("http://example.com:1234/path/to/something")
+
 	var c tesoro.Client
 
 	numberDevices := 0
@@ -65,7 +67,27 @@ func shell(c tesoro.Client) {
 			if len(args) < 2 {
 				fmt.Println("Missing parameters")
 			} else {
-				str, msgType = c.Call(c.Ping(strings.Join(args[1:], " ")))
+				pinProtection := false
+				buttonProtection := false
+				passphraseProtection := false
+
+				if len(args) >= 3 {
+					if string(args[2]) == "1" || string(args[2]) == "true" {
+						pinProtection = true
+					}
+				}
+				if len(args) >= 4 {
+					if string(args[3]) == "1" || string(args[3]) == "true" {
+						passphraseProtection = true
+					}
+				}
+				if len(args) >= 5 {
+					if string(args[4]) == "1" || string(args[4]) == "true" {
+						buttonProtection = true
+					}
+				}
+
+				str, msgType = c.Call(c.Ping(string(args[1]), pinProtection, passphraseProtection, buttonProtection))
 			}
 			break
 		case "signmessage":
@@ -85,7 +107,7 @@ func shell(c tesoro.Client) {
 			break
 		case "getaddress":
 			var path string
-			showDisplay := true
+			showDisplay := false
 			coinName := "Bitcoin"
 			if len(args) < 2 {
 				path = "m/44'/0'/0'"
@@ -93,8 +115,8 @@ func shell(c tesoro.Client) {
 				path = string(args[1])
 			}
 			if len(args) >= 3 {
-				if string(args[2]) == "0" || string(args[2]) == "false" {
-					showDisplay = false
+				if string(args[2]) == "1" || string(args[2]) == "true" {
+					showDisplay = true
 				}
 			}
 			if len(args) >= 4 {
@@ -143,6 +165,18 @@ func shell(c tesoro.Client) {
 			} else {
 
 				str, msgType = c.Call(c.GetPublicKey(tesoro.StringToBIP32Path(path)))
+			}
+			break
+		case "signidentity":
+			var index uint32
+			if len(args) < 4 {
+				fmt.Println("Missing parameters")
+			} else {
+				if len(args) >= 5 {
+					i, _ := strconv.Atoi(args[4])
+					index = uint32(i)
+				}
+				str, msgType = c.Call(c.SignIdentity(args[1], []byte(args[2]), args[3], index))
 			}
 			break
 		case "getfeatures":

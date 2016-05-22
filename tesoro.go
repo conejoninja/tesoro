@@ -16,7 +16,10 @@ import (
 
 	"golang.org/x/text/unicode/norm"
 
+	"net/url"
+
 	"github.com/conejoninja/tesoro/pb/messages"
+	"github.com/conejoninja/tesoro/pb/types"
 	"github.com/conejoninja/tesoro/transport"
 	"github.com/golang/protobuf/proto"
 	"github.com/zserge/hid"
@@ -61,13 +64,12 @@ func (c *Client) Initialize() []byte {
 	return msg
 }
 
-func (c *Client) Ping(str string) []byte {
+func (c *Client) Ping(str string, pinProtection, passphraseProtection, buttonProtection bool) []byte {
 	var m messages.Ping
-	ffalse := false
 	m.Message = &str
-	m.ButtonProtection = &ffalse
-	m.PinProtection = &ffalse
-	m.PassphraseProtection = &ffalse
+	m.ButtonProtection = &buttonProtection
+	m.PinProtection = &pinProtection
+	m.PassphraseProtection = &passphraseProtection
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
@@ -180,6 +182,25 @@ func (c *Client) SignMessage(message []byte) []byte {
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_SignMessage"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) SignIdentity(uri string, challengeHidden []byte, challengeVisual string, index uint32) []byte {
+	var m messages.SignIdentity
+	identity := URIToIdentity(uri)
+	identity.Index = &index
+	m.Identity = &identity
+	m.ChallengeHidden = challengeHidden
+	m.ChallengeVisual = &challengeVisual
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_SignIdentity"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -378,6 +399,15 @@ func (c *Client) Read() (string, uint16) {
 			smJSON, _ := json.Marshal(&msg)
 			str = string(smJSON)
 		}
+	} else if msgType == 54 {
+		var msg messages.SignedIdentity
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (54)"
+		} else {
+			smJSON, _ := json.Marshal(&msg)
+			str = string(smJSON)
+		}
 	}
 	return str, msgType
 }
@@ -475,6 +505,31 @@ func PNGToString(filename string) ([]byte, error) {
 		}
 	}
 	return img, nil
+}
+
+func URIToIdentity(uri string) types.IdentityType {
+	var identity types.IdentityType
+	u, err := url.Parse(uri)
+	if err != nil {
+		return identity
+	}
+
+	defaultPort := ""
+	identity.Proto = &u.Scheme
+	user := ""
+	if u.User != nil {
+		user = u.User.String()
+	}
+	identity.User = &user
+	tmp := strings.Split(u.Host, ":")
+	identity.Host = &tmp[0]
+	if len(tmp) > 1 {
+		identity.Port = &tmp[1]
+	} else {
+		identity.Port = &defaultPort
+	}
+	identity.Path = &u.Path
+	return identity
 }
 
 func hardened(key uint32) uint32 {
