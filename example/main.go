@@ -101,6 +101,18 @@ func shell(c tesoro.Client) {
 				str, msgType = c.Call(c.SetLabel(strings.Join(args[1:], " ")))
 			}
 			break
+		case "sethomescreen":
+			if len(args) < 2 {
+				fmt.Println("Missing parameters")
+			} else {
+				homescreen, err := tesoro.PNGToString(string(args[1]))
+				if err != nil {
+					fmt.Println("Error reading image")
+				} else {
+					str, msgType = c.Call(c.SetHomescreen(homescreen))
+				}
+			}
+			break
 		case "getpublickey":
 			str, msgType = c.Call(c.GetPublicKey())
 			break

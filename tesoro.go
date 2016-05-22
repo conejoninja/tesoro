@@ -1,20 +1,20 @@
 package tesoro
 
 import (
-	"encoding/binary"
-	"encoding/json"
-	"fmt"
-	"strconv"
-
-	"golang.org/x/text/unicode/norm"
-
 	"encoding/base64"
-
+	"encoding/binary"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"image"
+	_ "image/png"
+	"os"
+	"regexp"
+	"strconv"
 	"strings"
 
-	"regexp"
-
-	"encoding/hex"
+	"golang.org/x/text/unicode/norm"
 
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/transport"
@@ -191,6 +191,21 @@ func (c *Client) SignMessage(message []byte) []byte {
 func (c *Client) SetLabel(label string) []byte {
 	var m messages.ApplySettings
 	m.Label = &label
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ApplySettings"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) SetHomescreen(homescreen []byte) []byte {
+	var m messages.ApplySettings
+	m.Homescreen = homescreen
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
@@ -405,6 +420,49 @@ func ValidBip32(path string) bool {
 	path = re.ReplaceAllString(path, "")
 
 	return path == ""
+}
+
+func PNGToString(filename string) ([]byte, error) {
+	img := make([]byte, 1024)
+	infile, err := os.Open(filename)
+	if err != nil {
+		return img, err
+	}
+	defer infile.Close()
+
+	src, _, err := image.Decode(infile)
+	if err != nil {
+		return img, err
+	}
+
+	bounds := src.Bounds()
+	w, h := bounds.Max.X, bounds.Max.Y
+
+	if w != 128 || h != 64 {
+		err = errors.New("Wrong homescreen size")
+		return img, err
+	}
+
+	imgBin := ""
+	for j := 0; j < h; j++ {
+		for i := 0; i < w; i++ {
+			color := src.At(i, j)
+			r, g, b, _ := color.RGBA()
+			if (r + g + b) > 0 {
+				imgBin += "1"
+			} else {
+				imgBin += "0"
+			}
+		}
+	}
+	k := 0
+	for i := 0; i < len(imgBin); i += 8 {
+		if s, err := strconv.ParseUint(imgBin[i:i+8], 2, 32); err == nil {
+			img[k] = byte(s) //fmt.Sprintf("%c", s)
+			k++
+		}
+	}
+	return img, nil
 }
 
 func hardened(key uint32) uint32 {
