@@ -138,13 +138,11 @@ func (c *Client) PinMatrixAck(str string) []byte {
 	return msg
 }
 
-func (c *Client) GetAddress() []byte {
-	ttrue := false
-	bitcoin := "Bitcoin"
+func (c *Client) GetAddress(addressN []uint32, showDisplay bool, coinName string) []byte {
 	var m messages.GetAddress
-	//m.AddressN = []uint32{}
-	m.CoinName = &bitcoin
-	m.ShowDisplay = &ttrue
+	m.AddressN = addressN
+	m.CoinName = &coinName
+	m.ShowDisplay = &showDisplay
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
@@ -361,7 +359,7 @@ func (c *Client) Read() (string, uint16) {
 		if err != nil {
 			str = "Error unmarshalling (26)"
 		} else {
-			str = "Action required on TREZOR device"
+			str = "Confirm action on TREZOR device"
 		}
 	} else if msgType == 30 {
 		var msg messages.Address

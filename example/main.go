@@ -84,7 +84,24 @@ func shell(c tesoro.Client) {
 			}
 			break
 		case "getaddress":
-			str, msgType = c.Call(c.GetAddress())
+			var path string
+			showDisplay := true
+			coinName := "Bitcoin"
+			if len(args) < 2 {
+				path = "m/44'/0'/0'"
+			} else {
+				path = string(args[1])
+			}
+			if len(args) >= 3 {
+				if string(args[2]) == "0" || string(args[2]) == "false" {
+					showDisplay = false
+				}
+			}
+			if len(args) >= 4 {
+				coinName = string(args[3])
+			}
+
+			str, msgType = c.Call(c.GetAddress(tesoro.StringToBIP32Path(path), showDisplay, coinName))
 			break
 		case "getentropy":
 			if len(args) < 2 {
