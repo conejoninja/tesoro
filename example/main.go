@@ -72,22 +72,22 @@ func shell(c tesoro.Client) {
 				passphraseProtection := false
 
 				if len(args) >= 3 {
-					if string(args[2]) == "1" || string(args[2]) == "true" {
+					if args[2] == "1" || args[2] == "true" {
 						pinProtection = true
 					}
 				}
 				if len(args) >= 4 {
-					if string(args[3]) == "1" || string(args[3]) == "true" {
+					if args[3] == "1" || args[3] == "true" {
 						passphraseProtection = true
 					}
 				}
 				if len(args) >= 5 {
-					if string(args[4]) == "1" || string(args[4]) == "true" {
+					if args[4] == "1" || args[4] == "true" {
 						buttonProtection = true
 					}
 				}
 
-				str, msgType = c.Call(c.Ping(string(args[1]), pinProtection, passphraseProtection, buttonProtection))
+				str, msgType = c.Call(c.Ping(args[1], pinProtection, passphraseProtection, buttonProtection))
 			}
 			break
 		case "signmessage":
@@ -112,15 +112,15 @@ func shell(c tesoro.Client) {
 			if len(args) < 2 {
 				path = "m/44'/0'/0'"
 			} else {
-				path = string(args[1])
+				path = args[1]
 			}
 			if len(args) >= 3 {
-				if string(args[2]) == "1" || string(args[2]) == "true" {
+				if args[2] == "1" || args[2] == "true" {
 					showDisplay = true
 				}
 			}
 			if len(args) >= 4 {
-				coinName = string(args[3])
+				coinName = args[3]
 			}
 
 			str, msgType = c.Call(c.GetAddress(tesoro.StringToBIP32Path(path), showDisplay, coinName))
@@ -144,7 +144,7 @@ func shell(c tesoro.Client) {
 			if len(args) < 2 {
 				fmt.Println("Missing parameters")
 			} else {
-				homescreen, err := tesoro.PNGToString(string(args[1]))
+				homescreen, err := tesoro.PNGToString(args[1])
 				if err != nil {
 					fmt.Println("Error reading image")
 				} else {
@@ -157,13 +157,12 @@ func shell(c tesoro.Client) {
 			if len(args) < 2 {
 				path = "m/44'/0'/0'"
 			} else {
-				path = string(args[1])
+				path = args[1]
 			}
 
 			if !tesoro.ValidBIP32(path) {
 				fmt.Println("Invalid BIP32 path. Example: m/44'/0'/0'/0/27 ")
 			} else {
-
 				str, msgType = c.Call(c.GetPublicKey(tesoro.StringToBIP32Path(path)))
 			}
 			break
@@ -187,6 +186,39 @@ func shell(c tesoro.Client) {
 			break
 		case "changepin":
 			str, msgType = c.Call(c.ChangePin())
+			break
+		case "cipherkeyvalue":
+			var path string
+			var iv []byte
+			encrypt := true
+			askOnEncode := true
+			askOnDecode := true
+			if len(args) < 4 {
+				fmt.Println("Missing parameters")
+			} else {
+				if args[1] == "0" || args[1] == "false" {
+					encrypt = false
+				}
+				if len(args) < 5 {
+					path = "m/44'/0'/0'"
+				} else {
+					path = args[4]
+				}
+				if len(args) >= 6 {
+					iv = []byte(args[5])
+				}
+				if len(args) >= 7 && (args[6] == "0" || args[6] == "false") {
+					askOnEncode = false
+				}
+				if len(args) >= 8 && (args[7] == "0" || args[7] == "false") {
+					askOnDecode = false
+				}
+				if !tesoro.ValidBIP32(path) {
+					fmt.Println("Invalid BIP32 path. Example: m/44'/0'/0'/0/27 ")
+				} else {
+					str, msgType = c.Call(c.CipherKeyValue(encrypt, args[2], []byte(args[3]), tesoro.StringToBIP32Path(path), iv, askOnEncode, askOnDecode))
+				}
+			}
 			break
 		default:
 			if msgType == 18 { // PIN INPUT

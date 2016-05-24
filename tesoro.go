@@ -18,6 +18,8 @@ import (
 
 	"net/url"
 
+	"math"
+
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/pb/types"
 	"github.com/conejoninja/tesoro/transport"
@@ -206,21 +208,6 @@ func (c *Client) SignIdentity(uri string, challengeHidden []byte, challengeVisua
 	return msg
 }
 
-func (c *Client) EncryptMessage(message []byte) []byte {
-	var m messages.EncryptMessage
-	m.Message = norm.NFC.Bytes(message)
-	marshalled, err := proto.Marshal(&m)
-
-	if err != nil {
-		fmt.Println("ERROR Marshalling")
-	}
-
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_SignMessage"]), marshalled)...)
-	msg := append(magicHeader, marshalled...)
-
-	return msg
-}
-
 func (c *Client) SetLabel(label string) []byte {
 	var m messages.ApplySettings
 	m.Label = &label
@@ -297,6 +284,39 @@ func (c *Client) ClearSession() []byte {
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ClearSession"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) CipherKeyValue(encrypt bool, key string, value []byte, address []uint32, iv []byte, askOnEncrypt, askOnDecrypt bool) []byte {
+	var m messages.CipherKeyValue
+	m.Key = &key
+	if encrypt {
+		paddedValue := make([]byte, 16*int(math.Ceil(float64(len(value))/16)))
+		copy(paddedValue, value)
+		m.Value = paddedValue
+	} else {
+		var err error
+		m.Value, err = hex.DecodeString(string(value))
+		if err != nil {
+			fmt.Println("ERROR Decoding string")
+		}
+	}
+	m.AddressN = address
+	if len(iv) > 0 {
+		m.Iv = iv
+	}
+	m.Encrypt = &encrypt
+	m.AskOnEncrypt = &askOnEncrypt
+	m.AskOnDecrypt = &askOnDecrypt
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_CipherKeyValue"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -413,6 +433,14 @@ func (c *Client) Read() (string, uint16) {
 			smJSON, _ := json.Marshal(&msg)
 			str = string(smJSON)
 		}
+	} else if msgType == 48 {
+		var msg messages.CipheredKeyValue
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (48)"
+		} else {
+			str = string(msg.GetValue())
+		}
 	} else if msgType == 54 {
 		var msg messages.SignedIdentity
 		err = proto.Unmarshal(marshalled, &msg)
@@ -514,7 +542,7 @@ func PNGToString(filename string) ([]byte, error) {
 	k := 0
 	for i := 0; i < len(imgBin); i += 8 {
 		if s, err := strconv.ParseUint(imgBin[i:i+8], 2, 32); err == nil {
-			img[k] = byte(s) //fmt.Sprintf("%c", s)
+			img[k] = byte(s)
 			k++
 		}
 	}
