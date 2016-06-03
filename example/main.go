@@ -1,23 +1,25 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"strconv"
+
+	"bufio"
 
 	"github.com/chzyer/readline"
 	"github.com/conejoninja/tesoro"
 	"github.com/zserge/hid"
 )
 
+var client tesoro.Client
+var prompt *readline.Instance
+
 func main() {
-
-	tesoro.URIToIdentity("http://example.com:1234/path/to/something")
-
-	var c tesoro.Client
-
 	numberDevices := 0
 	hid.UsbWalk(func(device hid.Device) {
 		info := device.Info()
@@ -29,24 +31,45 @@ func main() {
 		// 0x0001 : 1     product
 		if info.Vendor == 21324 && info.Product == 1 {
 			numberDevices++
-			c.SetTransport(device)
+			client.SetTransport(device)
 		}
 	})
 	if numberDevices == 0 {
 		fmt.Println("No TREZOR devices found, make sure your device is connected")
 	} else {
 		fmt.Printf("Found %d TREZOR devices connected\n", numberDevices)
-		shell(c)
-		defer c.CloseTransport()
+		shell()
+		defer client.CloseTransport()
 	}
 }
 
-func shell(c tesoro.Client) {
+func call(msg []byte) (string, uint16) {
+	str, msgType := client.Call(msg)
+
+	if msgType == 18 {
+		fmt.Println(str)
+		line, err := prompt.Readline()
+		if err != nil {
+			fmt.Println("ERR", err)
+		}
+		str, msgType = call(client.PinMatrixAck(line))
+	} else if msgType == 26 {
+		fmt.Println(str)
+		str, msgType = call(client.ButtonAck())
+	} else if msgType == 41 {
+	} else if msgType == 46 {
+	}
+
+	return str, msgType
+}
+
+func shell() {
 	var str string
 	var msgType uint16
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt: ">",
 	})
+	prompt = rl
 	if err != nil {
 		panic(err)
 	}
@@ -87,7 +110,7 @@ func shell(c tesoro.Client) {
 					}
 				}
 
-				str, msgType = c.Call(c.Ping(args[1], pinProtection, passphraseProtection, buttonProtection))
+				str, msgType = call(client.Ping(args[1], pinProtection, passphraseProtection, buttonProtection))
 			}
 			break
 		case "signmessage":
@@ -95,14 +118,14 @@ func shell(c tesoro.Client) {
 				fmt.Println("Missing parameters")
 			} else {
 				msg := strings.Join(args[1:], " ")
-				str, msgType = c.Call(c.SignMessage([]byte(msg)))
+				str, msgType = call(client.SignMessage([]byte(msg)))
 			}
 			break
 		case "verifymessage":
 			if len(args) < 4 {
 				fmt.Println("Missing parameters")
 			} else {
-				str, msgType = c.Call(c.VerifyMessage(args[1], args[2], []byte(args[3])))
+				str, msgType = call(client.VerifyMessage(args[1], args[2], []byte(args[3])))
 			}
 			break
 		case "getaddress":
@@ -123,21 +146,21 @@ func shell(c tesoro.Client) {
 				coinName = args[3]
 			}
 
-			str, msgType = c.Call(c.GetAddress(tesoro.StringToBIP32Path(path), showDisplay, coinName))
+			str, msgType = call(client.GetAddress(tesoro.StringToBIP32Path(path), showDisplay, coinName))
 			break
 		case "getentropy":
 			if len(args) < 2 {
 				fmt.Println("Missing parameters")
 			} else {
 				size, _ := strconv.Atoi(args[1])
-				str, msgType = c.Call(c.GetEntropy(uint32(size)))
+				str, msgType = call(client.GetEntropy(uint32(size)))
 			}
 			break
 		case "setlabel":
 			if len(args) < 2 {
 				fmt.Println("Missing parameters")
 			} else {
-				str, msgType = c.Call(c.SetLabel(strings.Join(args[1:], " ")))
+				str, msgType = call(client.SetLabel(strings.Join(args[1:], " ")))
 			}
 			break
 		case "sethomescreen":
@@ -148,7 +171,7 @@ func shell(c tesoro.Client) {
 				if err != nil {
 					fmt.Println("Error reading image")
 				} else {
-					str, msgType = c.Call(c.SetHomescreen(homescreen))
+					str, msgType = call(client.SetHomescreen(homescreen))
 				}
 			}
 			break
@@ -163,7 +186,7 @@ func shell(c tesoro.Client) {
 			if !tesoro.ValidBIP32(path) {
 				fmt.Println("Invalid BIP32 path. Example: m/44'/0'/0'/0/27 ")
 			} else {
-				str, msgType = c.Call(c.GetPublicKey(tesoro.StringToBIP32Path(path)))
+				str, msgType = call(client.GetPublicKey(tesoro.StringToBIP32Path(path)))
 			}
 			break
 		case "signidentity":
@@ -175,17 +198,17 @@ func shell(c tesoro.Client) {
 					i, _ := strconv.Atoi(args[4])
 					index = uint32(i)
 				}
-				str, msgType = c.Call(c.SignIdentity(args[1], []byte(args[2]), args[3], index))
+				str, msgType = call(client.SignIdentity(args[1], []byte(args[2]), args[3], index))
 			}
 			break
 		case "getfeatures":
-			str, msgType = c.Call(c.GetFeatures())
+			str, msgType = call(client.GetFeatures())
 			break
 		case "clearsession":
-			str, msgType = c.Call(c.ClearSession())
+			str, msgType = call(client.ClearSession())
 			break
 		case "changepin":
-			str, msgType = c.Call(c.ChangePin())
+			str, msgType = call(client.ChangePin())
 			break
 		case "cipherkeyvalue":
 			var path string
@@ -216,24 +239,50 @@ func shell(c tesoro.Client) {
 				if !tesoro.ValidBIP32(path) {
 					fmt.Println("Invalid BIP32 path. Example: m/44'/0'/0'/0/27 ")
 				} else {
-					str, msgType = c.Call(c.CipherKeyValue(encrypt, args[2], []byte(args[3]), tesoro.StringToBIP32Path(path), iv, askOnEncode, askOnDecode))
+					str, msgType = call(client.CipherKeyValue(encrypt, args[2], []byte(args[3]), tesoro.StringToBIP32Path(path), iv, askOnEncode, askOnDecode))
 				}
 			}
 			break
-		default:
-			if msgType == 18 { // PIN INPUT
-				str, msgType = c.Call(c.PinMatrixAck(line))
-			} else {
-				fmt.Println("Unknown command")
-				str = line
-				msgType = 999
+		case "p1":
+			// GET MASTER KEY
+			str, msgType = call(client.GetMasterKey())
+			if msgType == 48 {
+				masterKey := hex.EncodeToString([]byte(str))
+				//fileKey, encKey, filename := tesoro.GetFileEncKey(masterKey)
+				filename, _, encKey := tesoro.GetFileEncKey(masterKey)
+
+				// OPEN FILE
+				fmt.Println("Opening file", filename)
+				file, err := os.Open("./" + filename)
+				if err != nil {
+					log.Panic(err)
+				}
+				defer file.Close()
+
+				reader := bufio.NewReader(file)
+				scanner := bufio.NewScanner(reader)
+
+				content := ""
+				first := true
+				for scanner.Scan() {
+					if !first {
+						content += "\n"
+					}
+					content += scanner.Text()
+					first = false
+				}
+
+				// DECRYPT STORAGE
+				a := tesoro.DecryptStorage(content, encKey)
+				fmt.Println(a)
 			}
+			break
+		default:
+			fmt.Println("Unknown command")
+			str = line
+			msgType = 999
 			break
 		}
 		fmt.Println(str, msgType)
-		if msgType == 26 {
-			str, msgType = c.Call(c.ButtonAck())
-			fmt.Println(str, msgType)
-		}
 	}
 }
