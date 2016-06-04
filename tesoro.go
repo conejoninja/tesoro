@@ -721,8 +721,21 @@ func DecryptStorage(content, key string) (Storage, error) {
 }
 
 func DecryptEntry(content, key string) (string, error) {
-	//cipherKey, _ := hex.DecodeString(key)
 	cipherKey := []byte(key)
 	value, err := AES256GCMDecrypt([]byte(content[28:]+content[12:28]), cipherKey, []byte(content[:12]), []byte(content[12:28]))
 	return string(value), err
+}
+
+func EncryptEntry(content, key string) (string, string) {
+	return AES256GCMMEncrypt([]byte(content), []byte(key))
+}
+
+func EncryptStorage(s Storage, key string) (string, string) {
+	cipherKey, _ := hex.DecodeString(key)
+	content, err := json.Marshal(s)
+	if err != nil {
+		log.Panic("Error encrypting")
+	}
+
+	return AES256GCMMEncrypt(content, cipherKey)
 }
