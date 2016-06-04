@@ -273,11 +273,25 @@ func shell() {
 
 				// DECRYPT STORAGE
 				data, err := tesoro.DecryptStorage(content, encKey)
-				str, msgType = call(client.GetEntryNonce(data.Entries["0"].Title, data.Entries["0"].Username, data.Entries["0"].Nonce))
-				pswd, err := tesoro.DecryptEntry(string(data.Entries["0"].Password.Data), str)
-				fmt.Println("Your password is", pswd, err)
-				note, err := tesoro.DecryptEntry(string(data.Entries["0"].SafeNote.Data), str)
-				fmt.Println("Your safe note is", note, err)
+				printStorage(data)
+
+				// Read entry to decrypt
+				line, err := rl.Readline()
+				if err != nil {
+					fmt.Println("ERR", err)
+					break
+				}
+				args = strings.Split(line, " ")
+				if _, ok := data.Entries[args[0]]; ok {
+					str, msgType = call(client.GetEntryNonce(data.Entries[args[0]].Title, data.Entries[args[0]].Username, data.Entries[args[0]].Nonce))
+					pswd, _ := tesoro.DecryptEntry(string(data.Entries[args[0]].Password.Data), str)
+					note, _ := tesoro.DecryptEntry(string(data.Entries[args[0]].SafeNote.Data), str)
+					fmt.Println("Password:", pswd[1:len(pswd)-1])
+					fmt.Println("Safe note:", note[1:len(note)-1])
+				} else {
+					fmt.Println("Selected entry does not exists")
+				}
+				str = ""
 			}
 			break
 		default:
@@ -286,6 +300,34 @@ func shell() {
 			msgType = 999
 			break
 		}
-		fmt.Println(str, msgType)
+		if str != "" {
+			fmt.Println(str, msgType)
+		}
 	}
+}
+
+func printStorage(s tesoro.Storage) {
+	fmt.Println("Password Entries")
+	fmt.Println("================")
+	fmt.Println("")
+
+	for id, e := range s.Entries {
+		printEntry(id, e)
+	}
+
+	fmt.Println("")
+	fmt.Println("Select entry number to decrypt: ")
+
+}
+
+func printEntry(id string, e tesoro.Entry) {
+	fmt.Printf("Entry id: #%s\n", id)
+	for i := 0; i < (11 + len(id)); i++ {
+		fmt.Print("-")
+	}
+	fmt.Println("")
+	fmt.Println("* username : ", e.Username)
+	fmt.Println("* tags : ", e.Tags)
+	fmt.Println("* title : ", e.Title)
+	fmt.Println("* note : ", e.Note)
 }

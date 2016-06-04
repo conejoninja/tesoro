@@ -42,7 +42,7 @@ type Client struct {
 	t transport.TransportHID
 }
 
-type JSONConfig struct {
+type Storage struct {
 	Version string           `json:"version"`
 	Config  Config           `json:"config"`
 	Tags    map[string]Tag   `json:"tags"`
@@ -705,7 +705,7 @@ func GetFileEncKey(masterKey string) (string, string, string) {
 	return filename, fileKey, encKey
 }
 
-func DecryptStorage(content, key string) (JSONConfig, error) {
+func DecryptStorage(content, key string) (Storage, error) {
 	cipherKey, _ := hex.DecodeString(key)
 	plainText, err := AES256GCMDecrypt([]byte(content[28:]+content[12:28]), cipherKey, []byte(content[:12]), []byte(content[12:28]))
 
@@ -713,7 +713,7 @@ func DecryptStorage(content, key string) (JSONConfig, error) {
 		log.Panic("Error decrypting")
 	}
 
-	var pc JSONConfig
+	var pc Storage
 	err = json.Unmarshal(plainText, &pc)
 
 	fmt.Println(string(plainText))
