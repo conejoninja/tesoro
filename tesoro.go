@@ -27,6 +27,8 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 
+	"log"
+
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/pb/types"
 	"github.com/conejoninja/tesoro/transport"
@@ -40,27 +42,36 @@ type Client struct {
 	t transport.TransportHID
 }
 
-type PasswordConfig struct {
-	Version string  `json:version`
-	Config  string  `json:config`
-	Tags    []Tag   `json:tags`
-	Entries []Entry `json:entries`
+type JSONConfig struct {
+	Version string           `json:"version"`
+	Config  Config           `json:"config"`
+	Tags    map[string]Tag   `json:"tags"`
+	Entries map[string]Entry `json:"entries"`
+}
+
+type Config struct {
+	OrderType string `json:"orderType"`
 }
 
 type Tag struct {
-	Title  string `json:title`
-	Icon   string `json:icon`
-	Active string `json:active`
+	Title  string `json:"title"`
+	Icon   string `json:"icon"`
+	Active string `json:"active"`
 }
 
 type Entry struct {
-	Title    string `json:title`
-	Username string `json:username`
-	Nonce    string `json:nonce`
-	Note     string `json:note`
-	Password string `json:password`
-	SafeNote string `json:safe_note`
-	Tags     string `json:tags`
+	Title    string        `json:"title"`
+	Username string        `json:"username"`
+	Nonce    string        `json:"nonce"`
+	Note     string        `json:"note"`
+	Password EncryptedData `json:"password"`
+	SafeNote EncryptedData `json:"safe_note"`
+	Tags     []int         `json:"tags"`
+}
+
+type EncryptedData struct {
+	Type string `json:"type"`
+	Data []byte `json:"data"`
 }
 
 func (c *Client) SetTransport(device hid.Device) {
@@ -314,6 +325,18 @@ func (c *Client) GetMasterKey() []byte {
 		StringToBIP32Path("m/10016'/0"),
 		[]byte{},
 		true,
+		true,
+	)
+}
+
+func (c *Client) GetEntryNonce(title, username, nonce string) []byte {
+	return c.CipherKeyValue(
+		false,
+		"Unlock "+title+" for user "+username+"?",
+		[]byte(nonce),
+		StringToBIP32Path("m/10016'/0"),
+		[]byte{},
+		false,
 		true,
 	)
 }
@@ -651,26 +674,23 @@ func AES256GCMMEncrypt(plainText, key []byte) (string, string) {
 	return hex.EncodeToString(cipheredText), hex.EncodeToString(nonce)
 }
 
-func AES256GCMDecrypt(cipheredText, key, nonce, tag []byte) string {
+func AES256GCMDecrypt(cipheredText, key, nonce, tag []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panic(err.Error())
+		return []byte{}, err
 	}
 
 	aesgcm, err := cipher.NewGCM(block)
 	if err != nil {
-		panic(err.Error())
+		return []byte{}, err
 	}
 
-	fmt.Println("TEXT", string(cipheredText), len(cipheredText))
-	fmt.Println("NONCE", string(nonce), len(nonce))
-	fmt.Println("TAG", string(tag), len(tag))
 	plainText, err := aesgcm.Open(nil, nonce, cipheredText, nil)
 	if err != nil {
-		panic(err.Error())
+		return []byte{}, err
 	}
 
-	return string(plainText)
+	return plainText, nil
 }
 
 func GetFileEncKey(masterKey string) (string, string, string) {
@@ -685,7 +705,24 @@ func GetFileEncKey(masterKey string) (string, string, string) {
 	return filename, fileKey, encKey
 }
 
-func DecryptStorage(content, key string) string {
+func DecryptStorage(content, key string) (JSONConfig, error) {
 	cipherKey, _ := hex.DecodeString(key)
-	return AES256GCMDecrypt([]byte(content[28:]+content[12:28]), cipherKey, []byte(content[:12]), []byte(content[12:28]))
+	plainText, err := AES256GCMDecrypt([]byte(content[28:]+content[12:28]), cipherKey, []byte(content[:12]), []byte(content[12:28]))
+
+	if err != nil {
+		log.Panic("Error decrypting")
+	}
+
+	var pc JSONConfig
+	err = json.Unmarshal(plainText, &pc)
+
+	fmt.Println(string(plainText))
+	return pc, err
+}
+
+func DecryptEntry(content, key string) (string, error) {
+	//cipherKey, _ := hex.DecodeString(key)
+	cipherKey := []byte(key)
+	value, err := AES256GCMDecrypt([]byte(content[28:]+content[12:28]), cipherKey, []byte(content[:12]), []byte(content[12:28]))
+	return string(value), err
 }

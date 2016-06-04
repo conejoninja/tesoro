@@ -252,7 +252,6 @@ func shell() {
 				filename, _, encKey := tesoro.GetFileEncKey(masterKey)
 
 				// OPEN FILE
-				fmt.Println("Opening file", filename)
 				file, err := os.Open("./" + filename)
 				if err != nil {
 					log.Panic(err)
@@ -273,8 +272,12 @@ func shell() {
 				}
 
 				// DECRYPT STORAGE
-				a := tesoro.DecryptStorage(content, encKey)
-				fmt.Println(a)
+				data, err := tesoro.DecryptStorage(content, encKey)
+				str, msgType = call(client.GetEntryNonce(data.Entries["0"].Title, data.Entries["0"].Username, data.Entries["0"].Nonce))
+				pswd, err := tesoro.DecryptEntry(string(data.Entries["0"].Password.Data), str)
+				fmt.Println("Your password is", pswd, err)
+				note, err := tesoro.DecryptEntry(string(data.Entries["0"].SafeNote.Data), str)
+				fmt.Println("Your safe note is", note, err)
 			}
 			break
 		default:
