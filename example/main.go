@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -20,6 +21,7 @@ var client tesoro.Client
 var prompt *readline.Instance
 
 func main() {
+
 	numberDevices := 0
 	hid.UsbWalk(func(device hid.Device) {
 		info := device.Info()
@@ -243,12 +245,12 @@ func shell() {
 				}
 			}
 			break
-		case "p1":
+		case "pswdmanager":
+		case "pm":
 			// GET MASTER KEY
 			str, msgType = call(client.GetMasterKey())
 			if msgType == 48 {
 				masterKey := hex.EncodeToString([]byte(str))
-				//fileKey, encKey, filename := tesoro.GetFileEncKey(masterKey)
 				filename, _, encKey := tesoro.GetFileEncKey(masterKey)
 
 				// OPEN FILE
@@ -294,6 +296,63 @@ func shell() {
 				str = ""
 			}
 			break
+		case "pswdexample":
+		case "pe":
+			// GET MASTER KEY
+			str, msgType = call(client.GetMasterKey())
+			if msgType == 48 {
+				masterKey := hex.EncodeToString([]byte(str))
+				filename, _, encKey := tesoro.GetFileEncKey(masterKey)
+
+				// OPEN FILE
+				file, err := os.Open("./" + filename)
+				if err != nil {
+					log.Panic(err)
+				}
+				defer file.Close()
+
+				reader := bufio.NewReader(file)
+				scanner := bufio.NewScanner(reader)
+
+				content := ""
+				first := true
+				for scanner.Scan() {
+					if !first {
+						content += "\n"
+					}
+					content += scanner.Text()
+					first = false
+				}
+
+				// DECRYPT STORAGE
+				data, err := tesoro.DecryptStorage(content, encKey)
+
+				var entry tesoro.Entry
+
+				rndByte, _ := tesoro.GenerateRandomBytes(3)
+				rnd := hex.EncodeToString(rndByte)
+
+				entry.Title = "Some Service " + rnd
+				entry.Username = "MyUsername" + rnd
+				entry.Note = "My normal note " + rnd
+				nonceByte, _ := tesoro.GenerateRandomBytes(32)
+				nonce := string(nonceByte)
+				entry.Tags = []int{1}
+				var eNonce string
+				eNonce, msgType = call(client.SetEntryNonce(entry.Title, entry.Username, nonce))
+				entry.Nonce = hex.EncodeToString([]byte(eNonce))
+				entry.Password = tesoro.EncryptedData{"buffer", tesoro.EncryptEntry("\"MySecretPassword"+rnd+"\"", nonce)}
+				entry.SafeNote = tesoro.EncryptedData{"buffer", tesoro.EncryptEntry("\"My Safe Note is safe "+rnd+"\"", nonce)}
+
+				lastEntry := strconv.Itoa(len(data.Entries))
+
+				data.Entries[lastEntry] = entry
+				fmt.Printf("Added entry #%s\n", lastEntry)
+				efile := tesoro.EncryptStorage(data, encKey)
+				ioutil.WriteFile("./"+filename, efile, 0644)
+				str = ""
+			}
+			break
 		default:
 			fmt.Println("Unknown command")
 			str = line
@@ -330,4 +389,5 @@ func printEntry(id string, e tesoro.Entry) {
 	fmt.Println("* tags : ", e.Tags)
 	fmt.Println("* title : ", e.Title)
 	fmt.Println("* note : ", e.Note)
+	fmt.Println("")
 }

@@ -43,30 +43,30 @@ type Client struct {
 }
 
 type Storage struct {
-	Version string           `json:"version"`
-	Config  Config           `json:"config"`
-	Tags    map[string]Tag   `json:"tags"`
-	Entries map[string]Entry `json:"entries"`
+	Version string           `json:"version,omitempty"`
+	Config  Config           `json:"config,omitempty"`
+	Tags    map[string]Tag   `json:"tags,omitempty"`
+	Entries map[string]Entry `json:"entries,omitempty"`
 }
 
 type Config struct {
-	OrderType string `json:"orderType"`
+	OrderType string `json:"orderType,omitempty"`
 }
 
 type Tag struct {
-	Title  string `json:"title"`
-	Icon   string `json:"icon"`
-	Active string `json:"active"`
+	Title  string `json:"title,omitempty"`
+	Icon   string `json:"icon,omitempty"`
+	Active string `json:"active,omitempty"`
 }
 
 type Entry struct {
-	Title    string        `json:"title"`
-	Username string        `json:"username"`
-	Nonce    string        `json:"nonce"`
-	Note     string        `json:"note"`
-	Password EncryptedData `json:"password"`
-	SafeNote EncryptedData `json:"safe_note"`
-	Tags     []int         `json:"tags"`
+	Title    string        `json:"title,omitempty"`
+	Username string        `json:"username,omitempty"`
+	Nonce    string        `json:"nonce,omitempty"`
+	Note     string        `json:"note,omitempty"`
+	Password EncryptedData `json:"password,omitempty"`
+	SafeNote EncryptedData `json:"safe_note,omitempty"`
+	Tags     []int         `json:"tags,omitempty"`
 }
 
 type EncryptedData struct {
@@ -332,6 +332,18 @@ func (c *Client) GetMasterKey() []byte {
 func (c *Client) GetEntryNonce(title, username, nonce string) []byte {
 	return c.CipherKeyValue(
 		false,
+		"Unlock "+title+" for user "+username+"?",
+		[]byte(nonce),
+		StringToBIP32Path("m/10016'/0"),
+		[]byte{},
+		false,
+		true,
+	)
+}
+
+func (c *Client) SetEntryNonce(title, username, nonce string) []byte {
+	return c.CipherKeyValue(
+		true,
 		"Unlock "+title+" for user "+username+"?",
 		[]byte(nonce),
 		StringToBIP32Path("m/10016'/0"),
@@ -653,7 +665,7 @@ func GenerateRandomBytes(n int) ([]byte, error) {
 	return b, nil
 }
 
-func AES256GCMMEncrypt(plainText, key []byte) (string, string) {
+func AES256GCMMEncrypt(plainText, key []byte) ([]byte, []byte) {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -671,7 +683,7 @@ func AES256GCMMEncrypt(plainText, key []byte) (string, string) {
 	}
 
 	cipheredText := aesgcm.Seal(nil, nonce, plainText, nil)
-	return hex.EncodeToString(cipheredText), hex.EncodeToString(nonce)
+	return cipheredText, nonce
 }
 
 func AES256GCMDecrypt(cipheredText, key, nonce, tag []byte) ([]byte, error) {
@@ -701,7 +713,7 @@ func GetFileEncKey(masterKey string) (string, string, string) {
 	mac.Write(filename_mess)
 	tmpMac := mac.Sum(nil)
 	digest := hex.EncodeToString(tmpMac)
-	filename := digest + ".pswd"
+	filename := "_" + digest + ".pswd"
 	return filename, fileKey, encKey
 }
 
@@ -710,13 +722,13 @@ func DecryptStorage(content, key string) (Storage, error) {
 	plainText, err := AES256GCMDecrypt([]byte(content[28:]+content[12:28]), cipherKey, []byte(content[:12]), []byte(content[12:28]))
 
 	if err != nil {
+		fmt.Println(err)
 		log.Panic("Error decrypting")
 	}
 
 	var pc Storage
 	err = json.Unmarshal(plainText, &pc)
 
-	fmt.Println(string(plainText))
 	return pc, err
 }
 
@@ -726,16 +738,22 @@ func DecryptEntry(content, key string) (string, error) {
 	return string(value), err
 }
 
-func EncryptEntry(content, key string) (string, string) {
-	return AES256GCMMEncrypt([]byte(content), []byte(key))
+func EncryptEntry(content, key string) []byte {
+	ciphered, nonce := AES256GCMMEncrypt([]byte(content), []byte(key))
+	cipheredText := string(ciphered)
+	l := len(ciphered)
+	return []byte(string(nonce) + cipheredText[l-16:] + cipheredText[:l-16])
 }
 
-func EncryptStorage(s Storage, key string) (string, string) {
+func EncryptStorage(s Storage, key string) []byte {
 	cipherKey, _ := hex.DecodeString(key)
 	content, err := json.Marshal(s)
 	if err != nil {
 		log.Panic("Error encrypting")
 	}
 
-	return AES256GCMMEncrypt(content, cipherKey)
+	ciphered, nonce := AES256GCMMEncrypt(content, cipherKey)
+	cipheredText := string(ciphered)
+	l := len(ciphered)
+	return []byte(string(nonce) + cipheredText[l-16:] + cipheredText[:l-16])
 }
