@@ -278,6 +278,42 @@ func (c *Client) WipeDevice() []byte {
 	return msg
 }
 
+func (c *Client) EntropyAck(entropy []byte) []byte {
+	var m messages.EntropyAck
+	m.Entropy = entropy
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_EntropyAck"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) ResetDevice(displayRandom bool, strength uint32, passphraseProtection, pinProtection bool, label string) []byte {
+	var m messages.ResetDevice
+	m.DisplayRandom = &displayRandom
+	m.Strength = &strength
+	m.PassphraseProtection = &passphraseProtection
+	m.PinProtection = &pinProtection
+	if label != "" {
+		m.Label = &label
+	}
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ResetDevice"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
 func (c *Client) LoadDevice(mnemonic string, passphraseProtection bool, label, pin string) []byte {
 	var m messages.LoadDevice
 	m.Mnemonic = &mnemonic
@@ -459,7 +495,7 @@ func (c *Client) Read() (string, uint16) {
 	if err != nil {
 		return "Error reading", 999
 	}
-	if msgLength <= 0 {
+	if msgLength <= 0 && msgType != 35 {
 		fmt.Println("Empty message", msgType)
 		return "", msgType
 	}
@@ -537,6 +573,9 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = msg.GetAddress()
 		}
+	} else if msgType == 35 {
+		externalEntropy, _ := GenerateRandomBytes(32)
+		str, msgType = c.Call(c.EntropyAck(externalEntropy))
 	} else if msgType == 40 {
 		var msg messages.MessageSignature
 		err = proto.Unmarshal(marshalled, &msg)
