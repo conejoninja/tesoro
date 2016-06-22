@@ -1,6 +1,9 @@
 package tesoro
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
@@ -9,6 +12,7 @@ import (
 	"fmt"
 	"image"
 	_ "image/png"
+	"io"
 	"os"
 	"regexp"
 	"strconv"
@@ -19,6 +23,11 @@ import (
 	"net/url"
 
 	"math"
+
+	"crypto/hmac"
+	"crypto/sha256"
+
+	"log"
 
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/pb/types"
@@ -31,6 +40,38 @@ const hardkey uint32 = 2147483648
 
 type Client struct {
 	t transport.TransportHID
+}
+
+type Storage struct {
+	Version string           `json:"version,omitempty"`
+	Config  Config           `json:"config,omitempty"`
+	Tags    map[string]Tag   `json:"tags,omitempty"`
+	Entries map[string]Entry `json:"entries,omitempty"`
+}
+
+type Config struct {
+	OrderType string `json:"orderType,omitempty"`
+}
+
+type Tag struct {
+	Title  string `json:"title,omitempty"`
+	Icon   string `json:"icon,omitempty"`
+	Active string `json:"active,omitempty"`
+}
+
+type Entry struct {
+	Title    string        `json:"title,omitempty"`
+	Username string        `json:"username,omitempty"`
+	Nonce    string        `json:"nonce,omitempty"`
+	Note     string        `json:"note,omitempty"`
+	Password EncryptedData `json:"password,omitempty"`
+	SafeNote EncryptedData `json:"safe_note,omitempty"`
+	Tags     []int         `json:"tags,omitempty"`
+}
+
+type EncryptedData struct {
+	Type string `json:"type"`
+	Data []byte `json:"data"`
 }
 
 func (c *Client) SetTransport(device hid.Device) {
@@ -275,6 +316,43 @@ func (c *Client) ButtonAck() []byte {
 	return msg
 }
 
+func (c *Client) GetMasterKey() []byte {
+	masterKey, _ := hex.DecodeString("2d650551248d792eabf628f451200d7f51cb63e46aadcbb1038aacb05e8c8aee2d650551248d792eabf628f451200d7f51cb63e46aadcbb1038aacb05e8c8aee")
+	return c.CipherKeyValue(
+		true,
+		"Activate TREZOR Password Manager?",
+		masterKey,
+		StringToBIP32Path("m/10016'/0"),
+		[]byte{},
+		true,
+		true,
+	)
+}
+
+func (c *Client) GetEntryNonce(title, username, nonce string) []byte {
+	return c.CipherKeyValue(
+		false,
+		"Unlock "+title+" for user "+username+"?",
+		[]byte(nonce),
+		StringToBIP32Path("m/10016'/0"),
+		[]byte{},
+		false,
+		true,
+	)
+}
+
+func (c *Client) SetEntryNonce(title, username, nonce string) []byte {
+	return c.CipherKeyValue(
+		true,
+		"Unlock "+title+" for user "+username+"?",
+		[]byte(nonce),
+		StringToBIP32Path("m/10016'/0"),
+		[]byte{},
+		false,
+		true,
+	)
+}
+
 func (c *Client) ClearSession() []byte {
 	var m messages.ClearSession
 	marshalled, err := proto.Marshal(&m)
@@ -343,7 +421,6 @@ func (c *Client) ReadUntil() (string, uint16) {
 func (c *Client) Read() (string, uint16) {
 	marshalled, msgType, msgLength, err := c.t.Read()
 	if err != nil {
-		//fmt.Println(err)
 		return "Error reading", 999
 	}
 	if msgLength <= 0 {
@@ -576,4 +653,107 @@ func URIToIdentity(uri string) types.IdentityType {
 
 func hardened(key uint32) uint32 {
 	return hardkey + key
+}
+
+func GenerateRandomBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func AES256GCMMEncrypt(plainText, key []byte) ([]byte, []byte) {
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	nonce := make([]byte, 12)
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		panic(err.Error())
+	}
+
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	cipheredText := aesgcm.Seal(nil, nonce, plainText, nil)
+	return cipheredText, nonce
+}
+
+func AES256GCMDecrypt(cipheredText, key, nonce, tag []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	plainText, err := aesgcm.Open(nil, nonce, cipheredText, nil)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return plainText, nil
+}
+
+func GetFileEncKey(masterKey string) (string, string, string) {
+	fileKey := masterKey[:len(masterKey)/2]
+	encKey := masterKey[len(masterKey)/2:]
+	filename_mess := []byte("5f91add3fa1c3c76e90c90a3bd0999e2bd7833d06a483fe884ee60397aca277a")
+	mac := hmac.New(sha256.New, []byte(fileKey))
+	mac.Write(filename_mess)
+	tmpMac := mac.Sum(nil)
+	digest := hex.EncodeToString(tmpMac)
+	filename := "_" + digest + ".pswd"
+	return filename, fileKey, encKey
+}
+
+func DecryptStorage(content, key string) (Storage, error) {
+	cipherKey, _ := hex.DecodeString(key)
+	plainText, err := AES256GCMDecrypt([]byte(content[28:]+content[12:28]), cipherKey, []byte(content[:12]), []byte(content[12:28]))
+
+	if err != nil {
+		fmt.Println(err)
+		log.Panic("Error decrypting")
+	}
+
+	var pc Storage
+	err = json.Unmarshal(plainText, &pc)
+
+	return pc, err
+}
+
+func DecryptEntry(content, key string) (string, error) {
+	cipherKey := []byte(key)
+	value, err := AES256GCMDecrypt([]byte(content[28:]+content[12:28]), cipherKey, []byte(content[:12]), []byte(content[12:28]))
+	return string(value), err
+}
+
+func EncryptEntry(content, key string) []byte {
+	ciphered, nonce := AES256GCMMEncrypt([]byte(content), []byte(key))
+	cipheredText := string(ciphered)
+	l := len(ciphered)
+	return []byte(string(nonce) + cipheredText[l-16:] + cipheredText[:l-16])
+}
+
+func EncryptStorage(s Storage, key string) []byte {
+	cipherKey, _ := hex.DecodeString(key)
+	content, err := json.Marshal(s)
+	if err != nil {
+		log.Panic("Error encrypting")
+	}
+
+	ciphered, nonce := AES256GCMMEncrypt(content, cipherKey)
+	cipheredText := string(ciphered)
+	l := len(ciphered)
+	return []byte(string(nonce) + cipheredText[l-16:] + cipheredText[:l-16])
 }
