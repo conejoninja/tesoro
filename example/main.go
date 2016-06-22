@@ -168,6 +168,42 @@ func shell() {
 		case "wipedevice":
 			str, msgType = call(client.WipeDevice())
 			break
+		case "resetdevice":
+			//displayRandom bool, strength uint32, passphraseProtection, pinProtection bool, label string
+			displayRandom := false
+			if len(args) > 1 {
+				if args[1] == "1" || args[1] == "true" {
+					displayRandom = true
+				}
+			}
+			var strength uint32
+			strength = 256
+			if len(args) > 2 {
+				if args[2] == "128" || args[2] == "196" {
+					i, ierr := strconv.Atoi(args[2])
+					if ierr == nil {
+						strength = uint32(i)
+					}
+				}
+			}
+			passphraseProtection := false
+			if len(args) > 3 {
+				if args[3] == "1" || args[3] == "true" {
+					passphraseProtection = true
+				}
+			}
+			pinProtection := false
+			if len(args) > 4 {
+				if args[4] == "1" || args[4] == "true" {
+					pinProtection = true
+				}
+			}
+			label := ""
+			if len(args) > 5 {
+				label = args[5]
+			}
+			str, msgType = call(client.ResetDevice(displayRandom, strength, passphraseProtection, pinProtection, label))
+			break
 		case "loaddevice":
 			l := len(args)
 			if l < 13 || (l > 15 && l < 25) || l > 28 {
@@ -292,45 +328,46 @@ func shell() {
 
 				// OPEN FILE
 				file, err := os.Open("./" + filename)
-				if err != nil {
-					log.Panic(err)
-				}
 				defer file.Close()
+				if err == nil {
+					reader := bufio.NewReader(file)
+					scanner := bufio.NewScanner(reader)
 
-				reader := bufio.NewReader(file)
-				scanner := bufio.NewScanner(reader)
-
-				content := ""
-				first := true
-				for scanner.Scan() {
-					if !first {
-						content += "\n"
+					content := ""
+					first := true
+					for scanner.Scan() {
+						if !first {
+							content += "\n"
+						}
+						content += scanner.Text()
+						first = false
 					}
-					content += scanner.Text()
-					first = false
-				}
 
-				// DECRYPT STORAGE
-				data, err := tesoro.DecryptStorage(content, encKey)
-				printStorage(data)
+					// DECRYPT STORAGE
+					data, err := tesoro.DecryptStorage(content, encKey)
+					printStorage(data)
 
-				// Read entry to decrypt
-				line, err := rl.Readline()
-				if err != nil {
-					fmt.Println("ERR", err)
-					break
-				}
-				args = strings.Split(line, " ")
-				if _, ok := data.Entries[args[0]]; ok {
-					str, msgType = call(client.GetEntryNonce(data.Entries[args[0]].Title, data.Entries[args[0]].Username, data.Entries[args[0]].Nonce))
-					pswd, _ := tesoro.DecryptEntry(string(data.Entries[args[0]].Password.Data), str)
-					note, _ := tesoro.DecryptEntry(string(data.Entries[args[0]].SafeNote.Data), str)
-					fmt.Println("Password:", pswd[1:len(pswd)-1])
-					fmt.Println("Safe note:", note[1:len(note)-1])
+					// Read entry to decrypt
+					line, err := rl.Readline()
+					if err != nil {
+						fmt.Println("ERR", err)
+						break
+					}
+					args = strings.Split(line, " ")
+					if _, ok := data.Entries[args[0]]; ok {
+						str, msgType = call(client.GetEntryNonce(data.Entries[args[0]].Title, data.Entries[args[0]].Username, data.Entries[args[0]].Nonce))
+						pswd, _ := tesoro.DecryptEntry(string(data.Entries[args[0]].Password.Data), str)
+						note, _ := tesoro.DecryptEntry(string(data.Entries[args[0]].SafeNote.Data), str)
+						fmt.Println("Password:", pswd[1:len(pswd)-1])
+						fmt.Println("Safe note:", note[1:len(note)-1])
+					} else {
+						fmt.Println("Selected entry does not exists")
+					}
+					str = ""
 				} else {
-					fmt.Println("Selected entry does not exists")
+					str = "Error opening file " + filename
 				}
-				str = ""
+
 			}
 			break
 		case "pswdexample": // Insert random entry as an example
@@ -343,51 +380,52 @@ func shell() {
 
 				// OPEN FILE
 				file, err := os.Open("./" + filename)
-				if err != nil {
-					log.Panic(err)
-				}
 				defer file.Close()
+				if err == nil {
+					reader := bufio.NewReader(file)
+					scanner := bufio.NewScanner(reader)
 
-				reader := bufio.NewReader(file)
-				scanner := bufio.NewScanner(reader)
-
-				content := ""
-				first := true
-				for scanner.Scan() {
-					if !first {
-						content += "\n"
+					content := ""
+					first := true
+					for scanner.Scan() {
+						if !first {
+							content += "\n"
+						}
+						content += scanner.Text()
+						first = false
 					}
-					content += scanner.Text()
-					first = false
+
+					// DECRYPT STORAGE
+					data, _ := tesoro.DecryptStorage(content, encKey)
+
+					var entry tesoro.Entry
+
+					rndByte, _ := tesoro.GenerateRandomBytes(3)
+					rnd := hex.EncodeToString(rndByte)
+
+					entry.Title = "Some Service " + rnd
+					entry.Username = "MyUsername" + rnd
+					entry.Note = "My normal note " + rnd
+					nonceByte, _ := tesoro.GenerateRandomBytes(32)
+					nonce := string(nonceByte)
+					entry.Tags = []int{1}
+					var eNonce string
+					eNonce, msgType = call(client.SetEntryNonce(entry.Title, entry.Username, nonce))
+					entry.Nonce = hex.EncodeToString([]byte(eNonce))
+					entry.Password = tesoro.EncryptedData{"buffer", tesoro.EncryptEntry("\"MySecretPassword"+rnd+"\"", nonce)}
+					entry.SafeNote = tesoro.EncryptedData{"buffer", tesoro.EncryptEntry("\"My Safe Note is safe "+rnd+"\"", nonce)}
+
+					lastEntry := strconv.Itoa(len(data.Entries))
+
+					data.Entries[lastEntry] = entry
+					fmt.Printf("Added entry #%s\n", lastEntry)
+					efile := tesoro.EncryptStorage(data, encKey)
+					ioutil.WriteFile("./"+filename, efile, 0644)
+					str = ""
+				} else {
+					str = "Error opening file " + filename
 				}
 
-				// DECRYPT STORAGE
-				data, err := tesoro.DecryptStorage(content, encKey)
-
-				var entry tesoro.Entry
-
-				rndByte, _ := tesoro.GenerateRandomBytes(3)
-				rnd := hex.EncodeToString(rndByte)
-
-				entry.Title = "Some Service " + rnd
-				entry.Username = "MyUsername" + rnd
-				entry.Note = "My normal note " + rnd
-				nonceByte, _ := tesoro.GenerateRandomBytes(32)
-				nonce := string(nonceByte)
-				entry.Tags = []int{1}
-				var eNonce string
-				eNonce, msgType = call(client.SetEntryNonce(entry.Title, entry.Username, nonce))
-				entry.Nonce = hex.EncodeToString([]byte(eNonce))
-				entry.Password = tesoro.EncryptedData{"buffer", tesoro.EncryptEntry("\"MySecretPassword"+rnd+"\"", nonce)}
-				entry.SafeNote = tesoro.EncryptedData{"buffer", tesoro.EncryptEntry("\"My Safe Note is safe "+rnd+"\"", nonce)}
-
-				lastEntry := strconv.Itoa(len(data.Entries))
-
-				data.Entries[lastEntry] = entry
-				fmt.Printf("Added entry #%s\n", lastEntry)
-				efile := tesoro.EncryptStorage(data, encKey)
-				ioutil.WriteFile("./"+filename, efile, 0644)
-				str = ""
 			}
 			break
 		default:
