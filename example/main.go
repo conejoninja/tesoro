@@ -162,6 +162,46 @@ func shell() {
 				str, msgType = call(client.SetLabel(strings.Join(args[1:], " ")))
 			}
 			break
+		case "initialize":
+			str, msgType = call(client.Initialize())
+			break
+		case "wipedevice":
+			str, msgType = call(client.WipeDevice())
+			break
+		case "loaddevice":
+			l := len(args)
+			if l < 13 || (l > 15 && l < 25) || l > 28 {
+				fmt.Println("Wrong number of parameters")
+			} else {
+				mnemonic := strings.Join(args[1:13], " ")
+				if l >= 25 {
+					mnemonic = strings.Join(args[1:25], " ")
+				}
+				passphraseProtection := false
+				if l == 14 || l == 15 || l == 16 {
+					if args[13] == "1" || args[13] == "true" {
+						passphraseProtection = true
+					}
+				} else if l == 26 || l == 27 || l == 28 {
+					if args[25] == "1" || args[25] == "true" {
+						passphraseProtection = true
+					}
+				}
+				var label string
+				if l == 15 {
+					label = args[14]
+				} else if l == 27 {
+					label = args[26]
+				}
+				var pin string
+				if l == 16 {
+					pin = args[15]
+				} else if l == 28 {
+					pin = args[27]
+				}
+				str, msgType = call(client.LoadDevice(mnemonic, passphraseProtection, label, pin))
+			}
+			break
 		case "sethomescreen":
 			if len(args) < 2 {
 				fmt.Println("Missing parameters")

@@ -264,6 +264,42 @@ func (c *Client) SetLabel(label string) []byte {
 	return msg
 }
 
+func (c *Client) WipeDevice() []byte {
+	var m messages.WipeDevice
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_WipeDevice"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) LoadDevice(mnemonic string, passphraseProtection bool, label, pin string) []byte {
+	var m messages.LoadDevice
+	m.Mnemonic = &mnemonic
+	m.PassphraseProtection = &passphraseProtection
+	if label != "" {
+		m.Label = &label
+	}
+	if pin != "" {
+		m.Pin = &pin
+	}
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_LoadDevice"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
 func (c *Client) SetHomescreen(homescreen []byte) []byte {
 	var m messages.ApplySettings
 	m.Homescreen = homescreen
