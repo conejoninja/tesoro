@@ -15,6 +15,22 @@ $ go get github.com/conejoninja/tesoro
 ## Documentation
 None yet, it's a work in progress
 
+## Supported methods
+* Initialize
+* Ping
+* ChangePin
+* GetEntropy
+* GetFeatures
+* GetAddress
+* GetPublicKey
+* SignMessage
+* SignIdentity
+* SetLabel
+* SetHomescreen
+* VerifyMessage
+* ClearSession
+* CipherKeyValue
+
 ## Notes
 I wouldn't use for anything serious or important, it's still in development.  
 

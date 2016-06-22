@@ -28,9 +28,6 @@ func main() {
 		// TREZOR
 		// 0x534c : 21324 vendor
 		// 0x0001 : 1     product
-		// KEEPKEY
-		// 0x2b24 : 11044 vendor
-		// 0x0001 : 1     product
 		if info.Vendor == 21324 && info.Product == 1 {
 			numberDevices++
 			client.SetTransport(device)
@@ -296,7 +293,7 @@ func shell() {
 				str = ""
 			}
 			break
-		case "pswdexample":
+		case "pswdexample": // Insert random entry as an example
 		case "pe":
 			// GET MASTER KEY
 			str, msgType = call(client.GetMasterKey())
