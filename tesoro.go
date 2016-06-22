@@ -713,7 +713,7 @@ func GetFileEncKey(masterKey string) (string, string, string) {
 	mac.Write(filename_mess)
 	tmpMac := mac.Sum(nil)
 	digest := hex.EncodeToString(tmpMac)
-	filename := "_" + digest + ".pswd"
+	filename := digest + ".pswd"
 	return filename, fileKey, encKey
 }
 
