@@ -412,15 +412,74 @@ func shell() {
 					var eNonce string
 					eNonce, msgType = call(client.SetEntryNonce(entry.Title, entry.Username, nonce))
 					entry.Nonce = hex.EncodeToString([]byte(eNonce))
-					entry.Password = tesoro.EncryptedData{"buffer", tesoro.EncryptEntry("\"MySecretPassword"+rnd+"\"", nonce)}
-					entry.SafeNote = tesoro.EncryptedData{"buffer", tesoro.EncryptEntry("\"My Safe Note is safe "+rnd+"\"", nonce)}
+					entry.Password = tesoro.EncryptedData{"Buffer", tesoro.EncryptEntry("\"MySecretPassword"+rnd+"\"", nonce)}
+					entry.SafeNote = tesoro.EncryptedData{"Buffer", tesoro.EncryptEntry("\"My Safe Note is safe "+rnd+"\"", nonce)}
 
-					lastEntry := strconv.Itoa(len(data.Entries))
+					max := 0
+					for k, _ := range data.Entries {
+						i, e := strconv.Atoi(k)
+						if e == nil && i > max {
+							max = i
+						}
+					}
+
+					lastEntry := strconv.Itoa(max + 1)
 
 					data.Entries[lastEntry] = entry
 					fmt.Printf("Added entry #%s\n", lastEntry)
 					efile := tesoro.EncryptStorage(data, encKey)
 					ioutil.WriteFile("./"+filename, efile, 0644)
+					str = ""
+				} else {
+					str = "Error opening file " + filename
+				}
+
+			}
+			break
+		case "pswdremove": // Remove entry from the list
+		case "pr":
+			// GET MASTER KEY
+			str, msgType = call(client.GetMasterKey())
+			if msgType == 48 {
+				masterKey := hex.EncodeToString([]byte(str))
+				filename, _, encKey := tesoro.GetFileEncKey(masterKey)
+
+				// OPEN FILE
+				file, err := os.Open("./" + filename)
+				defer file.Close()
+				if err == nil {
+					reader := bufio.NewReader(file)
+					scanner := bufio.NewScanner(reader)
+
+					content := ""
+					first := true
+					for scanner.Scan() {
+						if !first {
+							content += "\n"
+						}
+						content += scanner.Text()
+						first = false
+					}
+
+					// DECRYPT STORAGE
+					data, err := tesoro.DecryptStorage(content, encKey)
+					printStorage(data)
+
+					// Read entry to decrypt
+					line, err := rl.Readline()
+					if err != nil {
+						fmt.Println("ERR", err)
+						break
+					}
+					args = strings.Split(line, " ")
+					if _, ok := data.Entries[args[0]]; ok {
+						delete(data.Entries, args[0])
+						efile := tesoro.EncryptStorage(data, encKey)
+						ioutil.WriteFile("./"+filename, efile, 0644)
+						fmt.Printf("Deleted entry #%s\n", args[0])
+					} else {
+						fmt.Println("Selected entry does not exists")
+					}
 					str = ""
 				} else {
 					str = "Error opening file " + filename

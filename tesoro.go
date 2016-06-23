@@ -803,7 +803,6 @@ func DecryptStorage(content, key string) (Storage, error) {
 
 	var pc Storage
 	err = json.Unmarshal(plainText, &pc)
-
 	return pc, err
 }
 
