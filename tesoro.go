@@ -439,6 +439,35 @@ func (c *Client) ClearSession() []byte {
 	return msg
 }
 
+func (c *Client) FirmwareErase() []byte {
+	var m messages.FirmwareErase
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_FirmwareErase"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) FirmwareUpload(payload []byte) []byte {
+	var m messages.FirmwareUpload
+	m.Payload = payload
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_FirmwareUpload"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
 func (c *Client) CipherKeyValue(encrypt bool, key string, value []byte, address []uint32, iv []byte, askOnEncrypt, askOnDecrypt bool) []byte {
 	var m messages.CipherKeyValue
 	m.Key = &key
@@ -496,7 +525,6 @@ func (c *Client) Read() (string, uint16) {
 		return "Error reading", 999
 	}
 	if msgLength <= 0 && msgType != 35 {
-		fmt.Println("Empty message", msgType)
 		return "", msgType
 	}
 

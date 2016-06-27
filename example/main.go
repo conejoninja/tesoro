@@ -1,19 +1,21 @@
 package main
 
 import (
+	"bufio"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
-	"strconv"
-
-	"bufio"
+	"encoding/json"
 
 	"github.com/chzyer/readline"
 	"github.com/conejoninja/tesoro"
+	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/zserge/hid"
 )
 
@@ -32,6 +34,7 @@ func main() {
 			numberDevices++
 			client.SetTransport(device)
 		}
+
 	})
 	if numberDevices == 0 {
 		fmt.Println("No TREZOR devices found, make sure your device is connected")
@@ -75,6 +78,9 @@ func shell() {
 
 	defer rl.Close()
 	log.SetOutput(rl.Stderr())
+
+	//a, b := client.ReadUntil()
+	//fmt.Println("AB", a, b)
 
 	for {
 		line, err := rl.Readline()
@@ -247,6 +253,57 @@ func shell() {
 					fmt.Println("Error reading image")
 				} else {
 					str, msgType = call(client.SetHomescreen(homescreen))
+				}
+			}
+			break
+		case "fu":
+			if len(args) < 2 {
+				fmt.Println("Missing parameters")
+			} else {
+				file, err := os.Open(args[1])
+				defer file.Close()
+				if err != nil {
+					fmt.Println("Error reading firmware:", err)
+				} else {
+					stats, statsErr := file.Stat()
+					if statsErr != nil {
+						fmt.Println("Error Stat")
+					} else {
+						var size int64 = stats.Size()
+						fw := make([]byte, size)
+
+						bufr := bufio.NewReader(file)
+						_, err = bufr.Read(fw)
+
+						if string(fw[:4]) != "TRZR" {
+							fmt.Println("Not a TREZOR firmware")
+						} else {
+							var features messages.Features
+							str, msgType = call(client.Initialize())
+							if msgType != 17 {
+								fmt.Println("Error initializing the device")
+							} else {
+								err := json.Unmarshal([]byte(str), &features)
+								if err == nil {
+									if features.GetBootloaderMode() != true {
+										fmt.Println("Device must be in bootloader mode")
+									} else {
+										str, msgType = call(client.FirmwareErase())
+										if msgType != 2 {
+											fmt.Println("Error erasing previous firmware")
+										} else {
+											h := sha256.New()
+											h.Write([]byte(fw[256:]))
+											hash := h.Sum(nil)
+											fingerPrint := hex.EncodeToString(hash)
+											fmt.Println("Fingerprint:", fingerPrint)
+											str, msgType = call(client.FirmwareUpload(fw))
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 			break
