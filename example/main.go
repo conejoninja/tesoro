@@ -59,6 +59,12 @@ func call(msg []byte) (string, uint16) {
 		fmt.Println(str)
 		str, msgType = call(client.ButtonAck())
 	} else if msgType == 41 {
+		fmt.Println(str)
+		line, err := prompt.Readline()
+		if err != nil {
+			fmt.Println("ERR", err)
+		}
+		str, msgType = call(client.PassphraseAck(line))
 	} else if msgType == 46 {
 	}
 

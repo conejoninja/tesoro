@@ -183,6 +183,21 @@ func (c *Client) PinMatrixAck(str string) []byte {
 	return msg
 }
 
+func (c *Client) PassphraseAck(str string) []byte {
+	var m messages.PassphraseAck
+	m.Passphrase = &str
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_PassphraseAck"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
 func (c *Client) GetAddress(addressN []uint32, showDisplay bool, coinName string) []byte {
 	var m messages.GetAddress
 	m.AddressN = addressN
@@ -524,7 +539,7 @@ func (c *Client) Read() (string, uint16) {
 	if err != nil {
 		return "Error reading", 999
 	}
-	if msgLength <= 0 && msgType != 35 {
+	if msgLength <= 0 && msgType != 35 && msgType != 41 {
 		return "", msgType
 	}
 
@@ -612,6 +627,14 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			smJSON, _ := json.Marshal(&msg)
 			str = string(smJSON)
+		}
+	} else if msgType == 41 {
+		var msg messages.PassphraseRequest
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (41)"
+		} else {
+			str = "Enter your passphrase"
 		}
 	} else if msgType == 48 {
 		var msg messages.CipheredKeyValue
