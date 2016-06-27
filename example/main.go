@@ -79,9 +79,6 @@ func shell() {
 	defer rl.Close()
 	log.SetOutput(rl.Stderr())
 
-	//a, b := client.ReadUntil()
-	//fmt.Println("AB", a, b)
-
 	for {
 		line, err := rl.Readline()
 		if err != nil {
