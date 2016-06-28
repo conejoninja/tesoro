@@ -197,6 +197,20 @@ func (c *Client) PassphraseAck(str string) []byte {
 
 	return msg
 }
+func (c *Client) WordAck(str string) []byte {
+	var m messages.WordAck
+	m.Word = &str
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_WordAck"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
 
 func (c *Client) GetAddress(addressN []uint32, showDisplay bool, coinName string) []byte {
 	var m messages.GetAddress
@@ -346,6 +360,28 @@ func (c *Client) LoadDevice(mnemonic string, passphraseProtection bool, label, p
 	}
 
 	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_LoadDevice"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) RecoveryDevice(wordCount uint32, passphraseProtection, pinProtection bool, label string) []byte {
+	var m messages.RecoveryDevice
+	m.WordCount = &wordCount
+	m.PassphraseProtection = &passphraseProtection
+	m.PinProtection = &pinProtection
+	m.Label = &label
+
+	if label != "" {
+		m.Label = &label
+	}
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_RecoveryDevice"]), marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -535,13 +571,13 @@ func (c *Client) ReadUntil() (string, uint16) {
 }
 
 func (c *Client) Read() (string, uint16) {
-	marshalled, msgType, msgLength, err := c.t.Read()
+	marshalled, msgType, _, err := c.t.Read()
 	if err != nil {
 		return "Error reading", 999
 	}
-	if msgLength <= 0 && msgType != 35 && msgType != 41 {
+	/*if msgLength <= 0 && msgType != 35 && msgType != 41 {
 		return "", msgType
-	}
+	}*/
 
 	str := "Uncaught message type " + strconv.Itoa(int(msgType))
 	if msgType == 2 {
@@ -635,6 +671,14 @@ func (c *Client) Read() (string, uint16) {
 			str = "Error unmarshalling (41)"
 		} else {
 			str = "Enter your passphrase"
+		}
+	} else if msgType == 46 {
+		var msg messages.WordRequest
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (46)"
+		} else {
+			str = "Enter the word"
 		}
 	} else if msgType == 48 {
 		var msg messages.CipheredKeyValue

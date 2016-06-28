@@ -66,6 +66,12 @@ func call(msg []byte) (string, uint16) {
 		}
 		str, msgType = call(client.PassphraseAck(line))
 	} else if msgType == 46 {
+		fmt.Println(str)
+		line, err := prompt.Readline()
+		if err != nil {
+			fmt.Println("ERR", err)
+		}
+		str, msgType = call(client.WordAck(line))
 	}
 
 	return str, msgType
@@ -245,6 +251,37 @@ func shell() {
 					pin = args[27]
 				}
 				str, msgType = call(client.LoadDevice(mnemonic, passphraseProtection, label, pin))
+			}
+			break
+		case "recoverydevice":
+			l := len(args)
+			if l < 2 {
+				fmt.Println("Wrong number of parameters")
+			} else {
+				var wordCount uint32
+				i, _ := strconv.Atoi(args[1])
+				wordCount = uint32(i)
+				if wordCount == 12 || wordCount == 18 || wordCount == 24 {
+					passphraseProtection := false
+					if l >= 3 {
+						if args[2] == "1" || args[2] == "true" {
+							passphraseProtection = true
+						}
+					}
+					pinProtection := false
+					if l >= 4 {
+						if args[3] == "1" || args[3] == "true" {
+							pinProtection = true
+						}
+					}
+					var label string
+					if l == 5 {
+						label = args[4]
+					}
+					str, msgType = call(client.RecoveryDevice(wordCount, passphraseProtection, pinProtection, label))
+				} else {
+					fmt.Println("Invalid word count. Use 12/18/24")
+				}
 			}
 			break
 		case "sethomescreen":
