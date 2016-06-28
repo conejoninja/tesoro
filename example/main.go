@@ -292,53 +292,44 @@ func shell() {
 			}
 			break
 		case "fu":
+		case "firmwareupload":
 			if len(args) < 2 {
 				fmt.Println("Missing parameters")
 			} else {
-				file, err := os.Open(args[1])
-				defer file.Close()
+				fw, err := readFile(args[1])
 				if err != nil {
 					fmt.Println("Error reading firmware:", err)
 				} else {
-					stats, statsErr := file.Stat()
-					if statsErr != nil {
-						fmt.Println("Error Stat")
+
+					if string(fw[:4]) != "TRZR" {
+						fmt.Println("Not a TREZOR firmware")
 					} else {
-						var size int64 = stats.Size()
-						fw := make([]byte, size)
-
-						bufr := bufio.NewReader(file)
-						_, err = bufr.Read(fw)
-
-						if string(fw[:4]) != "TRZR" {
-							fmt.Println("Not a TREZOR firmware")
+						var features messages.Features
+						str, msgType = call(client.Initialize())
+						if msgType != 17 {
+							fmt.Println("Error initializing the device")
 						} else {
-							var features messages.Features
-							str, msgType = call(client.Initialize())
-							if msgType != 17 {
-								fmt.Println("Error initializing the device")
-							} else {
-								err := json.Unmarshal([]byte(str), &features)
-								if err == nil {
-									if features.GetBootloaderMode() != true {
-										fmt.Println("Device must be in bootloader mode")
+							err := json.Unmarshal([]byte(str), &features)
+							if err == nil {
+								if features.GetBootloaderMode() != true {
+									fmt.Println("Device must be in bootloader mode")
+								} else {
+									str, msgType = call(client.FirmwareErase())
+									if msgType != 2 {
+										fmt.Println("Error erasing previous firmware")
 									} else {
-										str, msgType = call(client.FirmwareErase())
-										if msgType != 2 {
-											fmt.Println("Error erasing previous firmware")
-										} else {
-											h := sha256.New()
-											h.Write([]byte(fw[256:]))
-											hash := h.Sum(nil)
-											fingerPrint := hex.EncodeToString(hash)
-											fmt.Println("Fingerprint:", fingerPrint)
-											str, msgType = call(client.FirmwareUpload(fw))
-										}
+										h := sha256.New()
+										h.Write([]byte(fw[256:]))
+										hash := h.Sum(nil)
+										fingerPrint := hex.EncodeToString(hash)
+										fmt.Println("Fingerprint:", fingerPrint)
+										str, msgType = call(client.FirmwareUpload(fw))
 									}
 								}
 							}
 						}
 					}
+
 				}
 			}
 			break
@@ -419,22 +410,9 @@ func shell() {
 				filename, _, encKey := tesoro.GetFileEncKey(masterKey)
 
 				// OPEN FILE
-				file, err := os.Open("./" + filename)
-				defer file.Close()
+				contentByte, err := readFile("./" + filename)
+				content := string(contentByte)
 				if err == nil {
-					reader := bufio.NewReader(file)
-					scanner := bufio.NewScanner(reader)
-
-					content := ""
-					first := true
-					for scanner.Scan() {
-						if !first {
-							content += "\n"
-						}
-						content += scanner.Text()
-						first = false
-					}
-
 					// DECRYPT STORAGE
 					data, err := tesoro.DecryptStorage(content, encKey)
 					printStorage(data)
@@ -450,8 +428,16 @@ func shell() {
 						str, msgType = call(client.GetEntryNonce(data.Entries[args[0]].Title, data.Entries[args[0]].Username, data.Entries[args[0]].Nonce))
 						pswd, _ := tesoro.DecryptEntry(string(data.Entries[args[0]].Password.Data), str)
 						note, _ := tesoro.DecryptEntry(string(data.Entries[args[0]].SafeNote.Data), str)
-						fmt.Println("Password:", pswd[1:len(pswd)-1])
-						fmt.Println("Safe note:", note[1:len(note)-1])
+						if len(pswd) > 2 {
+							fmt.Println("Password:", pswd[1:len(pswd)-1])
+						} else {
+							fmt.Println("Password:")
+						}
+						if len(note) > 2 {
+							fmt.Println("Safe note:", note[1:len(note)-1])
+						} else {
+							fmt.Println("Safe note:")
+						}
 					} else {
 						fmt.Println("Selected entry does not exists")
 					}
@@ -471,22 +457,9 @@ func shell() {
 				filename, _, encKey := tesoro.GetFileEncKey(masterKey)
 
 				// OPEN FILE
-				file, err := os.Open("./" + filename)
-				defer file.Close()
+				contentByte, err := readFile("./" + filename)
+				content := string(contentByte)
 				if err == nil {
-					reader := bufio.NewReader(file)
-					scanner := bufio.NewScanner(reader)
-
-					content := ""
-					first := true
-					for scanner.Scan() {
-						if !first {
-							content += "\n"
-						}
-						content += scanner.Text()
-						first = false
-					}
-
 					// DECRYPT STORAGE
 					data, _ := tesoro.DecryptStorage(content, encKey)
 
@@ -537,22 +510,9 @@ func shell() {
 				filename, _, encKey := tesoro.GetFileEncKey(masterKey)
 
 				// OPEN FILE
-				file, err := os.Open("./" + filename)
-				defer file.Close()
+				contentByte, err := readFile("./" + filename)
+				content := string(contentByte)
 				if err == nil {
-					reader := bufio.NewReader(file)
-					scanner := bufio.NewScanner(reader)
-
-					content := ""
-					first := true
-					for scanner.Scan() {
-						if !first {
-							content += "\n"
-						}
-						content += scanner.Text()
-						first = false
-					}
-
 					// DECRYPT STORAGE
 					data, err := tesoro.DecryptStorage(content, encKey)
 					printStorage(data)
@@ -616,4 +576,25 @@ func printEntry(id string, e tesoro.Entry) {
 	fmt.Println("* title : ", e.Title)
 	fmt.Println("* note : ", e.Note)
 	fmt.Println("")
+}
+
+func readFile(filename string) ([]byte, error) {
+	var empty []byte
+
+	file, err := os.Open(filename)
+	defer file.Close()
+	if err != nil {
+		return empty, err
+	}
+
+	stats, statsErr := file.Stat()
+	if statsErr != nil {
+		return empty, statsErr
+	}
+	var size int64 = stats.Size()
+	fw := make([]byte, size)
+
+	bufr := bufio.NewReader(file)
+	_, err = bufr.Read(fw)
+	return fw, err
 }
