@@ -365,6 +365,43 @@ func (c *Client) LoadDevice(mnemonic string, passphraseProtection bool, label, p
 	return msg
 }
 
+func (c *Client) EncryptMessage(pubkey, message []byte, displayOnly bool, address []uint32, coinName string) []byte {
+	var m messages.EncryptMessage
+	m.Pubkey = pubkey
+	m.Message = message
+	m.DisplayOnly = &displayOnly
+	m.AddressN = address
+	m.CoinName = &coinName
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_EncryptMessage"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) DecryptMessage(address []uint32, nonce, message, hmac []byte) []byte {
+	var m messages.DecryptMessage
+	m.AddressN = address
+	m.Nonce = nonce
+	m.Message = message
+	m.Hmac = hmac
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_DecryptMessage"]), marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
 func (c *Client) RecoveryDevice(wordCount uint32, passphraseProtection, pinProtection bool, label string) []byte {
 	var m messages.RecoveryDevice
 	m.WordCount = &wordCount
@@ -687,6 +724,22 @@ func (c *Client) Read() (string, uint16) {
 			str = "Error unmarshalling (48)"
 		} else {
 			str = string(msg.GetValue())
+		}
+	} else if msgType == 50 {
+		var msg messages.EncryptedMessage
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (50)"
+		} else {
+			str = msg.String()
+		}
+	} else if msgType == 52 {
+		var msg messages.DecryptedMessage
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (52)"
+		} else {
+			str = msg.String()
 		}
 	} else if msgType == 54 {
 		var msg messages.SignedIdentity
