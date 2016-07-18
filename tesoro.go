@@ -365,12 +365,12 @@ func (c *Client) LoadDevice(mnemonic string, passphraseProtection bool, label, p
 	return msg
 }
 
-func (c *Client) EncryptMessage(pubkey, message []byte, displayOnly bool, address []uint32, coinName string) []byte {
+func (c *Client) EncryptMessage(pubkey, message string, displayOnly bool, path, coinName string) []byte {
 	var m messages.EncryptMessage
-	m.Pubkey = pubkey
-	m.Message = message
+	m.Pubkey = []byte(pubkey)
+	m.Message = []byte(message)
 	m.DisplayOnly = &displayOnly
-	m.AddressN = address
+	m.AddressN = StringToBIP32Path(path)
 	m.CoinName = &coinName
 	marshalled, err := proto.Marshal(&m)
 
@@ -384,14 +384,13 @@ func (c *Client) EncryptMessage(pubkey, message []byte, displayOnly bool, addres
 	return msg
 }
 
-func (c *Client) DecryptMessage(address []uint32, nonce, message, hmac []byte) []byte {
+func (c *Client) DecryptMessage(path string, nonce, message, hmac []byte) []byte {
 	var m messages.DecryptMessage
-	m.AddressN = address
+	m.AddressN = StringToBIP32Path(path)
 	m.Nonce = nonce
 	m.Message = message
 	m.Hmac = hmac
 	marshalled, err := proto.Marshal(&m)
-
 	if err != nil {
 		fmt.Println("ERROR Marshalling")
 	}
@@ -647,7 +646,8 @@ func (c *Client) Read() (string, uint16) {
 		if err != nil {
 			str = "Error unmarshalling (12)"
 		} else {
-			str = msg.GetXpub()
+			smJSON, _ := json.Marshal(&msg)
+			str = string(smJSON)
 		}
 	} else if msgType == 17 {
 		var msg messages.Features
@@ -731,7 +731,8 @@ func (c *Client) Read() (string, uint16) {
 		if err != nil {
 			str = "Error unmarshalling (50)"
 		} else {
-			str = msg.String()
+			smJSON, _ := json.Marshal(&msg)
+			str = string(smJSON)
 		}
 	} else if msgType == 52 {
 		var msg messages.DecryptedMessage
@@ -739,7 +740,7 @@ func (c *Client) Read() (string, uint16) {
 		if err != nil {
 			str = "Error unmarshalling (52)"
 		} else {
-			str = msg.String()
+			str = string(msg.GetMessage())
 		}
 	} else if msgType == 54 {
 		var msg messages.SignedIdentity
