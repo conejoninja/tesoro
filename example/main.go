@@ -13,6 +13,8 @@ import (
 
 	"encoding/json"
 
+	"encoding/base64"
+
 	"github.com/chzyer/readline"
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/pb/messages"
@@ -23,7 +25,6 @@ var client tesoro.Client
 var prompt *readline.Instance
 
 func main() {
-
 	numberDevices := 0
 	hid.UsbWalk(func(device hid.Device) {
 		info := device.Info()
@@ -161,6 +162,54 @@ func shell() {
 			}
 
 			str, msgType = call(client.GetAddress(tesoro.StringToBIP32Path(path), showDisplay, coinName))
+			break
+		case "encryptmessage":
+			if len(args) < 3 {
+				fmt.Println("Missing parameters")
+			} else {
+				path := "m/44'/0'/0'"
+				displayOnly := false
+				coinName := "Bitcoin"
+				pubkey, errHex := hex.DecodeString(args[1])
+				if errHex == nil {
+					message := args[2]
+					if len(args) >= 4 {
+						if args[3] == "1" || args[3] == "true" {
+							displayOnly = true
+						}
+					}
+					if len(args) >= 5 {
+						path = args[4]
+					}
+					if len(args) >= 6 {
+						coinName = args[5]
+					}
+					str, msgType = call(client.EncryptMessage(string(pubkey), message, displayOnly, path, coinName))
+					var encrypted messages.EncryptedMessage
+					err := json.Unmarshal([]byte(str), &encrypted)
+					if err == nil {
+						str = base64.StdEncoding.EncodeToString([]byte(string(encrypted.Nonce) + string(encrypted.Message) + string(encrypted.Hmac)))
+					} else {
+						str = "Error in data"
+					}
+
+				} else {
+					fmt.Println("Public key has to be hexadecimal", string(pubkey), errHex)
+				}
+			}
+			break
+		case "decryptmessage":
+			if len(args) < 3 {
+				fmt.Println("Missing parameters")
+			} else {
+				decoded, err := base64.StdEncoding.DecodeString(args[2])
+				if err == nil {
+					l := len(decoded)
+					str, msgType = call(client.DecryptMessage(args[1], decoded[:33], decoded[33:l-8], decoded[l-8:]))
+				} else {
+					fmt.Println("Not a valid payload")
+				}
+			}
 			break
 		case "getentropy":
 			if len(args) < 2 {
@@ -345,6 +394,31 @@ func shell() {
 				fmt.Println("Invalid BIP32 path. Example: m/44'/0'/0'/0/27 ")
 			} else {
 				str, msgType = call(client.GetPublicKey(tesoro.StringToBIP32Path(path)))
+				var node messages.PublicKey
+				err := json.Unmarshal([]byte(str), &node)
+				if err == nil {
+					str = node.GetXpub()
+				}
+			}
+			break
+		case "getnode":
+			var path string
+			if len(args) < 2 {
+				path = "m/44'/0'/0'"
+			} else {
+				path = args[1]
+			}
+
+			if !tesoro.ValidBIP32(path) {
+				fmt.Println("Invalid BIP32 path. Example: m/44'/0'/0'/0/27 ")
+			} else {
+				str, msgType = call(client.GetPublicKey(tesoro.StringToBIP32Path(path)))
+				var node messages.PublicKey
+				err := json.Unmarshal([]byte(str), &node)
+				if err == nil {
+					smJSON, _ := json.Marshal(node.GetNode())
+					str = string(smJSON)
+				}
 			}
 			break
 		case "signidentity":
