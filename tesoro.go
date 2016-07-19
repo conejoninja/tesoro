@@ -599,25 +599,16 @@ func (c *Client) SignTx(outputsCount, inputsCount uint32, coinName string, versi
 	return msg
 }
 
-func (c *Client) SimpleSignTx(inputs []*types.TxInputType, outputs []*types.TxOutputType, transactions []*types.TransactionType, coinName string, version, lockTime uint32) []byte {
-	var m messages.SimpleSignTx
-	m.Inputs = inputs
-	m.Outputs = outputs
-	m.Transactions = transactions
-	m.CoinName = &coinName
-	if version != 0 {
-		m.Version = &version
-	}
-	if lockTime != 0 {
-		m.LockTime = &lockTime
-	}
+func (c *Client) TxAck(tx types.TransactionType) []byte {
+	var m messages.TxAck
+	m.Tx = &tx
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_SimpleSignTx, marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_TxAck, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -754,14 +745,6 @@ func (c *Client) Read() (string, uint16) {
 		if err != nil {
 			str = "Error unmarshalling (21)"
 		} else {
-			//fmt.Println(msg.GetDetails())
-			//fmt.Println(msg.GetRequestType())
-			//fmt.Println(msg.GetSerialized())
-			if msg.GetRequestType() == types.RequestType_TXINPUT {
-			} else if msg.GetRequestType() == types.RequestType_TXOUTPUT {
-			} else if msg.GetRequestType() == types.RequestType_TXMETA {
-			} else if msg.GetRequestType() == types.RequestType_TXFINISHED {
-			}
 			var txreq TxRequest
 			txreq.Details = msg.GetDetails()
 			txreq.Type = msg.GetRequestType()
