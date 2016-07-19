@@ -13,6 +13,7 @@ import (
 	"image"
 	_ "image/png"
 	"io"
+	"math"
 	"os"
 	"regexp"
 	"strconv"
@@ -21,8 +22,6 @@ import (
 	"golang.org/x/text/unicode/norm"
 
 	"net/url"
-
-	"math"
 
 	"crypto/hmac"
 	"crypto/sha256"
@@ -74,6 +73,11 @@ type EncryptedData struct {
 	Data []byte `json:"data"`
 }
 
+type TxRequest struct {
+	Details *types.TxRequestDetailsType `json:"details,omitempty"`
+	Type    types.RequestType           `json:"type,omitempty"`
+}
+
 func (c *Client) SetTransport(device hid.Device) {
 	c.t.SetDevice(device)
 }
@@ -82,7 +86,7 @@ func (c *Client) CloseTransport() {
 	c.t.Close()
 }
 
-func (c *Client) Header(msgType int, msg []byte) []byte {
+func (c *Client) Header(msgType messages.MessageType, msg []byte) []byte {
 
 	typebuf := make([]byte, 2)
 	binary.BigEndian.PutUint16(typebuf, uint16(msgType))
@@ -101,7 +105,7 @@ func (c *Client) Initialize() []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_Initialize"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_Initialize, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -119,7 +123,7 @@ func (c *Client) Ping(str string, pinProtection, passphraseProtection, buttonPro
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_Ping"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_Ping, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -133,7 +137,7 @@ func (c *Client) ChangePin() []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ChangePin"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_ChangePin, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -148,7 +152,7 @@ func (c *Client) GetEntropy(size uint32) []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_GetEntropy"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_GetEntropy, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -162,7 +166,7 @@ func (c *Client) GetFeatures() []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_GetFeatures"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_GetFeatures, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -177,7 +181,7 @@ func (c *Client) PinMatrixAck(str string) []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_PinMatrixAck"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_PinMatrixAck, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -192,7 +196,7 @@ func (c *Client) PassphraseAck(str string) []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_PassphraseAck"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_PassphraseAck, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -206,7 +210,7 @@ func (c *Client) WordAck(str string) []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_WordAck"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_WordAck, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -223,7 +227,7 @@ func (c *Client) GetAddress(addressN []uint32, showDisplay bool, coinName string
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_GetAddress"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_GetAddress, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -238,7 +242,7 @@ func (c *Client) GetPublicKey(address []uint32) []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_GetPublicKey"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_GetPublicKey, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -253,7 +257,7 @@ func (c *Client) SignMessage(message []byte) []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_SignMessage"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_SignMessage, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -272,7 +276,7 @@ func (c *Client) SignIdentity(uri string, challengeHidden []byte, challengeVisua
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_SignIdentity"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_SignIdentity, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -287,7 +291,7 @@ func (c *Client) SetLabel(label string) []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ApplySettings"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_ApplySettings, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -301,7 +305,7 @@ func (c *Client) WipeDevice() []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_WipeDevice"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_WipeDevice, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -316,7 +320,7 @@ func (c *Client) EntropyAck(entropy []byte) []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_EntropyAck"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_EntropyAck, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -337,7 +341,7 @@ func (c *Client) ResetDevice(displayRandom bool, strength uint32, passphraseProt
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ResetDevice"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_ResetDevice, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -359,7 +363,7 @@ func (c *Client) LoadDevice(mnemonic string, passphraseProtection bool, label, p
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_LoadDevice"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_LoadDevice, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -378,7 +382,7 @@ func (c *Client) EncryptMessage(pubkey, message string, displayOnly bool, path, 
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_EncryptMessage"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_EncryptMessage, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -395,7 +399,7 @@ func (c *Client) DecryptMessage(path string, nonce, message, hmac []byte) []byte
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_DecryptMessage"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_DecryptMessage, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -417,7 +421,7 @@ func (c *Client) RecoveryDevice(wordCount uint32, passphraseProtection, pinProte
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_RecoveryDevice"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_RecoveryDevice, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -432,7 +436,7 @@ func (c *Client) SetHomescreen(homescreen []byte) []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ApplySettings"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_ApplySettings, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -455,7 +459,24 @@ func (c *Client) VerifyMessage(address, signature string, message []byte) []byte
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_VerifyMessage"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_VerifyMessage, marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) EstimateTxSize(outputsCount, inputsCount uint32, coinName string) []byte {
+	var m messages.EstimateTxSize
+	m.OutputsCount = &outputsCount
+	m.InputsCount = &inputsCount
+	m.CoinName = &coinName
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_EstimateTxSize, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -469,7 +490,7 @@ func (c *Client) ButtonAck() []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ButtonAck"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_ButtonAck, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -520,7 +541,7 @@ func (c *Client) ClearSession() []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_ClearSession"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_ClearSession, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -534,7 +555,7 @@ func (c *Client) FirmwareErase() []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_FirmwareErase"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_FirmwareErase, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -549,7 +570,54 @@ func (c *Client) FirmwareUpload(payload []byte) []byte {
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_FirmwareUpload"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_FirmwareUpload, marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) SignTx(outputsCount, inputsCount uint32, coinName string, version, lockTime uint32) []byte {
+	var m messages.SignTx
+	m.OutputsCount = &outputsCount
+	m.InputsCount = &inputsCount
+	m.CoinName = &coinName
+	if version != 0 {
+		m.Version = &version
+	}
+	if lockTime != 0 {
+		m.LockTime = &lockTime
+	}
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_SignTx, marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
+func (c *Client) SimpleSignTx(inputs []*types.TxInputType, outputs []*types.TxOutputType, transactions []*types.TransactionType, coinName string, version, lockTime uint32) []byte {
+	var m messages.SimpleSignTx
+	m.Inputs = inputs
+	m.Outputs = outputs
+	m.Transactions = transactions
+	m.CoinName = &coinName
+	if version != 0 {
+		m.Version = &version
+	}
+	if lockTime != 0 {
+		m.LockTime = &lockTime
+	}
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_SimpleSignTx, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -582,7 +650,7 @@ func (c *Client) CipherKeyValue(encrypt bool, key string, value []byte, address 
 		fmt.Println("ERROR Marshalling")
 	}
 
-	magicHeader := append([]byte{35, 35}, c.Header(int(messages.MessageType_value["MessageType_CipherKeyValue"]), marshalled)...)
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_CipherKeyValue, marshalled)...)
 	msg := append(magicHeader, marshalled...)
 
 	return msg
@@ -616,7 +684,8 @@ func (c *Client) Read() (string, uint16) {
 	}*/
 
 	str := "Uncaught message type " + strconv.Itoa(int(msgType))
-	if msgType == 2 {
+	switch messages.MessageType(msgType) {
+	case messages.MessageType_MessageType_Success:
 		var msg messages.Success
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -624,7 +693,8 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = msg.GetMessage()
 		}
-	} else if msgType == 3 {
+		break
+	case messages.MessageType_MessageType_Failure:
 		var msg messages.Failure
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -632,7 +702,8 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = msg.GetMessage()
 		}
-	} else if msgType == 10 {
+		break
+	case messages.MessageType_MessageType_Entropy:
 		var msg messages.Entropy
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -640,7 +711,8 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = hex.EncodeToString(msg.GetEntropy())
 		}
-	} else if msgType == 12 {
+		break
+	case messages.MessageType_MessageType_PublicKey:
 		var msg messages.PublicKey
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -649,7 +721,8 @@ func (c *Client) Read() (string, uint16) {
 			smJSON, _ := json.Marshal(&msg)
 			str = string(smJSON)
 		}
-	} else if msgType == 17 {
+		break
+	case messages.MessageType_MessageType_Features:
 		var msg messages.Features
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -658,7 +731,8 @@ func (c *Client) Read() (string, uint16) {
 			ftsJSON, _ := json.Marshal(&msg)
 			str = string(ftsJSON)
 		}
-	} else if msgType == 18 {
+		break
+	case messages.MessageType_MessageType_PinMatrixRequest:
 		var msg messages.PinMatrixRequest
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -673,7 +747,29 @@ func (c *Client) Read() (string, uint16) {
 				str = "Please re-enter new PIN:"
 			}
 		}
-	} else if msgType == 26 {
+		break
+	case messages.MessageType_MessageType_TxRequest:
+		var msg messages.TxRequest
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (21)"
+		} else {
+			//fmt.Println(msg.GetDetails())
+			//fmt.Println(msg.GetRequestType())
+			//fmt.Println(msg.GetSerialized())
+			if msg.GetRequestType() == types.RequestType_TXINPUT {
+			} else if msg.GetRequestType() == types.RequestType_TXOUTPUT {
+			} else if msg.GetRequestType() == types.RequestType_TXMETA {
+			} else if msg.GetRequestType() == types.RequestType_TXFINISHED {
+			}
+			var txreq TxRequest
+			txreq.Details = msg.GetDetails()
+			txreq.Type = msg.GetRequestType()
+			smJSON, _ := json.Marshal(&msg)
+			str = string(smJSON)
+		}
+		break
+	case messages.MessageType_MessageType_ButtonRequest:
 		var msg messages.ButtonRequest
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -681,7 +777,8 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = "Confirm action on TREZOR device"
 		}
-	} else if msgType == 30 {
+		break
+	case messages.MessageType_MessageType_Address:
 		var msg messages.Address
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -689,10 +786,12 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = msg.GetAddress()
 		}
-	} else if msgType == 35 {
+		break
+	case messages.MessageType_MessageType_EntropyRequest:
 		externalEntropy, _ := GenerateRandomBytes(32)
 		str, msgType = c.Call(c.EntropyAck(externalEntropy))
-	} else if msgType == 40 {
+		break
+	case messages.MessageType_MessageType_MessageSignature:
 		var msg messages.MessageSignature
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -701,7 +800,8 @@ func (c *Client) Read() (string, uint16) {
 			smJSON, _ := json.Marshal(&msg)
 			str = string(smJSON)
 		}
-	} else if msgType == 41 {
+		break
+	case messages.MessageType_MessageType_PassphraseRequest:
 		var msg messages.PassphraseRequest
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -709,7 +809,17 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = "Enter your passphrase"
 		}
-	} else if msgType == 46 {
+		break
+	case messages.MessageType_MessageType_TxSize:
+		var msg messages.TxSize
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (44)"
+		} else {
+			str = strconv.Itoa(int(msg.GetTxSize()))
+		}
+		break
+	case messages.MessageType_MessageType_WordRequest:
 		var msg messages.WordRequest
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -717,7 +827,8 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = "Enter the word"
 		}
-	} else if msgType == 48 {
+		break
+	case messages.MessageType_MessageType_CipheredKeyValue:
 		var msg messages.CipheredKeyValue
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -725,7 +836,8 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = string(msg.GetValue())
 		}
-	} else if msgType == 50 {
+		break
+	case messages.MessageType_MessageType_EncryptedMessage:
 		var msg messages.EncryptedMessage
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -734,7 +846,8 @@ func (c *Client) Read() (string, uint16) {
 			smJSON, _ := json.Marshal(&msg)
 			str = string(smJSON)
 		}
-	} else if msgType == 52 {
+		break
+	case messages.MessageType_MessageType_DecryptedMessage:
 		var msg messages.DecryptedMessage
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -742,7 +855,8 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			str = string(msg.GetMessage())
 		}
-	} else if msgType == 54 {
+		break
+	case messages.MessageType_MessageType_SignedIdentity:
 		var msg messages.SignedIdentity
 		err = proto.Unmarshal(marshalled, &msg)
 		if err != nil {
@@ -751,6 +865,9 @@ func (c *Client) Read() (string, uint16) {
 			smJSON, _ := json.Marshal(&msg)
 			str = string(smJSON)
 		}
+		break
+	default:
+		break
 	}
 	return str, msgType
 }
