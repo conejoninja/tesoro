@@ -28,11 +28,11 @@ import (
 
 	"log"
 
+	"github.com/conejoninja/hid"
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/pb/types"
 	"github.com/conejoninja/tesoro/transport"
 	"github.com/golang/protobuf/proto"
-	"github.com/zserge/hid"
 )
 
 const hardkey uint32 = 2147483648
@@ -670,9 +670,6 @@ func (c *Client) Read() (string, uint16) {
 	if err != nil {
 		return "Error reading", 999
 	}
-	/*if msgLength <= 0 && msgType != 35 && msgType != 41 {
-		return "", msgType
-	}*/
 
 	str := "Uncaught message type " + strconv.Itoa(int(msgType))
 	switch messages.MessageType(msgType) {

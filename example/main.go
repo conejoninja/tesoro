@@ -18,7 +18,7 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/pb/messages"
-	"github.com/zserge/hid"
+	"github.com/conejoninja/hid"
 )
 
 var client tesoro.Client
@@ -33,7 +33,16 @@ func main() {
 		// 0x0001 : 1     product
 		if info.Vendor == 21324 && info.Product == 1 {
 			numberDevices++
+			_, epOut := device.GetEndpoints()
+			if epOut!=1 && epOut!=2 {
+				device.SetEpOut(0x01)
+			}
+			device.SetEpIn(0x81)
+			info.Interface = 0x00
+			device.SetInfo(info)
+			fmt.Println("DEVICE", device)
 			client.SetTransport(device)
+			return
 		}
 
 	})
@@ -227,7 +236,11 @@ func shell() {
 			}
 			break
 		case "initialize":
+		case "init":
 			str, msgType = call(client.Initialize())
+			break
+		case "firmwareerase":
+			str, msgType = call(client.FirmwareErase())
 			break
 		case "wipedevice":
 			str, msgType = call(client.WipeDevice())
@@ -341,7 +354,7 @@ func shell() {
 			}
 			break
 		case "fu":
-		case "firmwareupload":
+		//case "firmwareupload":
 			if len(args) < 2 {
 				fmt.Println("Missing parameters")
 			} else {
@@ -349,7 +362,6 @@ func shell() {
 				if err != nil {
 					fmt.Println("Error reading firmware:", err)
 				} else {
-
 					if string(fw[:4]) != "TRZR" {
 						fmt.Println("Not a TREZOR firmware")
 					} else {
