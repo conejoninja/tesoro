@@ -30,7 +30,7 @@ func (t *TransportHID) Write(msg []byte) {
 		l := int(math.Min(63, float64(len(msg))))
 		tmp := append([]byte{63}, msg[:l]...)
 		copy(blank, tmp)
-		n, err := t.device.Write(blank, 10*time.Second)
+		n, err := t.device.Write(blank, 1*time.Second)
 
 		if err == nil && n > 0 {
 			if len(msg) < 64 {

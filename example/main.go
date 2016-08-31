@@ -354,7 +354,7 @@ func shell() {
 			}
 			break
 		case "fu":
-		//case "firmwareupload":
+		case "firmwareupload":
 			if len(args) < 2 {
 				fmt.Println("Missing parameters")
 			} else {
