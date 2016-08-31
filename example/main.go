@@ -353,6 +353,18 @@ func shell() {
 				}
 			}
 			break
+		case "setu2fcounter":
+			if len(args) < 2 {
+				fmt.Println("Missing parameters")
+			} else {
+				U2Fcounter, err := strconv.Atoi(args[1])
+				if err != nil {
+					fmt.Println("Not valid counter")
+				} else {
+					str, msgType = call(client.SetU2FCounter(uint32(U2Fcounter)))
+				}
+			}
+			break
 		case "fu":
 		case "firmwareupload":
 			if len(args) < 2 {

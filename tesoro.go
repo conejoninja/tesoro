@@ -547,6 +547,21 @@ func (c *Client) ClearSession() []byte {
 	return msg
 }
 
+func (c *Client) SetU2FCounter(U2FCounter uint32) []byte {
+	var m messages.SetU2FCounter
+	m.U2FCounter = &U2FCounter
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_SetU2FCounter, marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
 func (c *Client) FirmwareErase() []byte {
 	var m messages.FirmwareErase
 	marshalled, err := proto.Marshal(&m)
