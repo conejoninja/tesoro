@@ -562,6 +562,25 @@ func (c *Client) SetU2FCounter(U2FCounter uint32) []byte {
 	return msg
 }
 
+func (c *Client) GetECDHSessionKey(uri string, index uint32, peerPublicKey []byte, ecdsaCurveName string) []byte {
+	var m messages.GetECDHSessionKey
+	identity := URIToIdentity(uri)
+	identity.Index = &index
+	m.Identity = &identity
+	m.PeerPublicKey = peerPublicKey
+	m.EcdsaCurveName = &ecdsaCurveName
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_GetECDHSessionKey, marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
 func (c *Client) FirmwareErase() []byte {
 	var m messages.FirmwareErase
 	marshalled, err := proto.Marshal(&m)
@@ -859,6 +878,15 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			smJSON, _ := json.Marshal(&msg)
 			str = string(smJSON)
+		}
+		break
+	case messages.MessageType_MessageType_ECDHSessionKey:
+		var msg messages.ECDHSessionKey
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (62)"
+		} else {
+			str = string(msg.SessionKey)
 		}
 		break
 	default:
