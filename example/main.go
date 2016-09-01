@@ -16,9 +16,9 @@ import (
 	"encoding/base64"
 
 	"github.com/chzyer/readline"
+	"github.com/conejoninja/hid"
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/pb/messages"
-	"github.com/conejoninja/hid"
 )
 
 var client tesoro.Client
@@ -34,7 +34,7 @@ func main() {
 		if info.Vendor == 21324 && info.Product == 1 {
 			numberDevices++
 			_, epOut := device.GetEndpoints()
-			if epOut!=1 && epOut!=2 {
+			if epOut != 1 && epOut != 2 {
 				device.SetEpOut(0x01)
 			}
 			device.SetEpIn(0x81)
@@ -362,6 +362,23 @@ func shell() {
 					fmt.Println("Not valid counter")
 				} else {
 					str, msgType = call(client.SetU2FCounter(uint32(U2Fcounter)))
+				}
+			}
+			break
+		case "getecdhsessionkey":
+		case "getecdh":
+			if len(args) < 4 {
+				fmt.Println("Missing parameters")
+			} else {
+				index, err := strconv.Atoi(args[2])
+				if err != nil {
+					fmt.Println("Not valid index")
+				} else {
+					curve := "secp256k1"
+					if len(args) > 4 {
+						curve = args[4]
+					}
+					str, msgType = call(client.GetECDHSessionKey(args[1], uint32(index), []byte(args[3]), curve))
 				}
 			}
 			break
