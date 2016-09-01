@@ -172,6 +172,22 @@ func shell() {
 
 			str, msgType = call(client.GetAddress(tesoro.StringToBIP32Path(path), showDisplay, coinName))
 			break
+		case "ethgetaddress":
+			var path string
+			showDisplay := false
+			if len(args) < 2 {
+				path = "m/44'/0'/0'"
+			} else {
+				path = args[1]
+			}
+			if len(args) >= 3 {
+				if args[2] == "1" || args[2] == "true" {
+					showDisplay = true
+				}
+			}
+
+			str, msgType = call(client.EthereumGetAddress(tesoro.StringToBIP32Path(path), showDisplay))
+			break
 		case "encryptmessage":
 			if len(args) < 3 {
 				fmt.Println("Missing parameters")

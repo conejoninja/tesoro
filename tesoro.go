@@ -681,6 +681,22 @@ func (c *Client) CipherKeyValue(encrypt bool, key string, value []byte, address 
 	return msg
 }
 
+func (c *Client) EthereumGetAddress(addressN []uint32, showDisplay bool) []byte {
+	var m messages.EthereumGetAddress
+	m.AddressN = addressN
+	m.ShowDisplay = &showDisplay
+	marshalled, err := proto.Marshal(&m)
+
+	if err != nil {
+		fmt.Println("ERROR Marshalling")
+	}
+
+	magicHeader := append([]byte{35, 35}, c.Header(messages.MessageType_MessageType_EthereumGetAddress, marshalled)...)
+	msg := append(magicHeader, marshalled...)
+
+	return msg
+}
+
 func (c *Client) Call(msg []byte) (string, uint16) {
 	c.t.Write(msg)
 	return c.ReadUntil()
@@ -878,6 +894,15 @@ func (c *Client) Read() (string, uint16) {
 		} else {
 			smJSON, _ := json.Marshal(&msg)
 			str = string(smJSON)
+		}
+		break
+	case messages.MessageType_MessageType_EthereumAddress:
+		var msg messages.EthereumAddress
+		err = proto.Unmarshal(marshalled, &msg)
+		if err != nil {
+			str = "Error unmarshalling (57)"
+		} else {
+			str = hex.EncodeToString(msg.GetAddress())
 		}
 		break
 	case messages.MessageType_MessageType_ECDHSessionKey:
