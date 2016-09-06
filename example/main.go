@@ -32,12 +32,9 @@ func main() {
 		// 0x534c : 21324 vendor
 		// 0x0001 : 1     product
 		// 0x00   : Main Trezor Interface
-		// 0x01   : Main Trezor Endpoint
-		if info.Vendor == 21324 && info.Product == 1 {
+		if info.Vendor == 21324 && info.Product == 1 && info.Interface == 0 {
 			numberDevices++
-			device.SetInterface(0x00)
 			client.SetTransport(device)
-			device.SetEndpoint(0x01)
 		}
 
 	})
