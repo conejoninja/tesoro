@@ -31,7 +31,8 @@ func main() {
 		// TREZOR
 		// 0x534c : 21324 vendor
 		// 0x0001 : 1     product
-		if info.Vendor == 21324 && info.Product == 1 {
+		// 0x00   : Main Trezor Interface
+		if info.Vendor == 21324 && info.Product == 1 && info.Interface == 0 {
 			numberDevices++
 			_, epOut := device.GetEndpoints()
 			if epOut != 1 && epOut != 2 {
