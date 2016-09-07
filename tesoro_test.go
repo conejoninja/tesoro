@@ -99,6 +99,7 @@ func TestPingButton(t *testing.T) {
 
 	var expectedPing = "PONG"
 
+	fmt.Println("[WHAT TO DO] Click on \"Accept\"")
 	t.Log("We need to test the PING.")
 	{
 		t.Logf("\tChecking PING for response \"%s\"",
@@ -118,3 +119,107 @@ func TestPingButton(t *testing.T) {
 		}
 	}
 }
+
+func TestPingButtonCancel(t *testing.T) {
+
+	var expectedPing = "PONG"
+	var expectedString = "Ping cancelled"
+
+	fmt.Println("[WHAT TO DO] Click on \"Cancel\"")
+	t.Log("We need to test the PING.")
+	{
+		t.Logf("\tChecking PING for response \"%s\"",
+			expectedPing)
+		{
+			str, msgType := call(client.Ping(expectedPing, false, false, true))
+
+			if msgType != 3 {
+				t.Errorf("\t\tExpected msgType=3, received %d", msgType)
+			}
+			if str != expectedString {
+				t.Errorf("\t\tExpected str=\"%s\", received\"%s\"", expectedString, str)
+			}
+			if msgType == 3 && str == expectedString {
+				t.Log("\t\tEverything went fine, \\ʕ◔ϖ◔ʔ/ YAY!")
+			}
+		}
+	}
+}
+
+func TestInitialize(t *testing.T) {
+
+	t.Log("We need to test the Initialize.")
+	{
+		t.Log("\tChecking Initialize for response ")
+		{
+			_, msgType := call(client.Initialize())
+
+			if msgType != 17 {
+				t.Errorf("\t\tExpected msgType=17, received %d", msgType)
+			} else {
+				t.Log("\t\tEverything went fine, \\ʕ◔ϖ◔ʔ/ YAY!")
+			}
+		}
+	}
+}
+
+func TestGetFeatures(t *testing.T) {
+
+	t.Log("We need to test the GetFeatures.")
+	{
+		t.Log("\tChecking GetFeatures for response ")
+		{
+			_, msgType := call(client.GetFeatures())
+
+			if msgType != 17 {
+				t.Errorf("\t\tExpected msgType=17, received %d", msgType)
+			} else {
+				t.Log("\t\tEverything went fine, \\ʕ◔ϖ◔ʔ/ YAY!")
+			}
+		}
+	}
+}
+
+func TestClearSession(t *testing.T) {
+
+	t.Log("We need to test the ClearSession.")
+	{
+		t.Log("\tChecking ClearSession for response ")
+		{
+			_, msgType := call(client.ClearSession())
+
+			if msgType != 2 {
+				t.Errorf("\t\tExpected msgType=2, received %d", msgType)
+			} else {
+				t.Log("\t\tEverything went fine, \\ʕ◔ϖ◔ʔ/ YAY!")
+			}
+		}
+	}
+}
+
+func TestGetEntropy(t *testing.T) {
+
+	fmt.Println("[WHAT TO DO] Click on \"Accept\"")
+	t.Log("We need to test the GetEntropy.")
+	{
+		t.Log("\tChecking GetEntropy for response ")
+		{
+			str, msgType := call(client.GetEntropy(8))
+
+			if msgType != 10 {
+				t.Errorf("\t\tExpected msgType=10, received %d", msgType)
+			}
+
+			if len(str) != 16 {
+				t.Errorf("\t\tExpected length=16, received %d", len(str))
+			}
+
+			if msgType == 10 && len(str) == 16 {
+				t.Log("\t\tEverything went fine, \\ʕ◔ϖ◔ʔ/ YAY!")
+			}
+		}
+	}
+}
+
+
+
