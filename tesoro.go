@@ -82,7 +82,7 @@ func (c *Client) SetTransport(t transport.Transport) {
 }
 
 func (c *Client) CloseTransport() {
-	//c.t.Close()
+	c.t.Close()
 }
 
 func (c *Client) Header(msgType messages.MessageType, msg []byte) []byte {
