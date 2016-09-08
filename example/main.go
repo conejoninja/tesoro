@@ -16,9 +16,10 @@ import (
 	"encoding/base64"
 
 	"github.com/chzyer/readline"
-	"github.com/conejoninja/hid"
+	"github.com/zserge/hid"
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/pb/messages"
+	"github.com/conejoninja/tesoro/transport"
 )
 
 var client tesoro.Client
@@ -34,15 +35,9 @@ func main() {
 		// 0x00   : Main Trezor Interface
 		if info.Vendor == 21324 && info.Product == 1 && info.Interface == 0 {
 			numberDevices++
-			_, epOut := device.GetEndpoints()
-			if epOut != 1 && epOut != 2 {
-				device.SetEpOut(0x01)
-			}
-			device.SetEpIn(0x81)
-			info.Interface = 0x00
-			device.SetInfo(info)
-			fmt.Println("DEVICE", device)
-			client.SetTransport(device)
+			var t transport.TransportHID
+			t.SetDevice(device)
+			client.SetTransport(&t)
 			return
 		}
 

@@ -6,25 +6,25 @@ import (
 	"math"
 	"time"
 
-	"github.com/zserge/hid"
+	"github.com/conejoninja/hid"
 )
 
-type TransportHID struct {
+type TransportHIDAndroid struct {
 	device hid.Device
 }
 
-func (t *TransportHID) SetDevice(device hid.Device) {
+func (t *TransportHIDAndroid) SetDevice(device hid.Device) {
 	t.device = device
 	if err := t.device.Open(); err != nil {
 		log.Println("Open error: ", err)
 	}
 }
 
-func (t *TransportHID) Close() {
+func (t *TransportHIDAndroid) Close() {
 	t.device.Close()
 }
 
-func (t *TransportHID) Write(msg []byte) {
+func (t *TransportHIDAndroid) Write(msg []byte) {
 	for len(msg) > 0 && t.device != nil {
 		blank := make([]byte, 64)
 		l := int(math.Min(63, float64(len(msg))))
@@ -44,7 +44,7 @@ func (t *TransportHID) Write(msg []byte) {
 	}
 }
 
-func (t *TransportHID) Read() ([]byte, uint16, int, error) {
+func (t *TransportHIDAndroid) Read() ([]byte, uint16, int, error) {
 	buf, err := t.device.Read(-1, 100*time.Millisecond)
 	var marshalled []byte
 
