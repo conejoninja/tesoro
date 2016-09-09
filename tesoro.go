@@ -28,7 +28,6 @@ import (
 
 	"log"
 
-	"github.com/conejoninja/hid"
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/pb/types"
 	"github.com/conejoninja/tesoro/transport"
@@ -38,7 +37,7 @@ import (
 const hardkey uint32 = 2147483648
 
 type Client struct {
-	t transport.TransportHID
+	t transport.Transport
 }
 
 type Storage struct {
@@ -78,8 +77,8 @@ type TxRequest struct {
 	Type    types.RequestType           `json:"type,omitempty"`
 }
 
-func (c *Client) SetTransport(device hid.Device) {
-	c.t.SetDevice(device)
+func (c *Client) SetTransport(t transport.Transport) {
+	c.t = t
 }
 
 func (c *Client) CloseTransport() {
