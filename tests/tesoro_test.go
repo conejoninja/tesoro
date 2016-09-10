@@ -300,7 +300,7 @@ func aTestLoadDevice24(t *testing.T) {
 	}
 }
 
-func TestSetLabel(t *testing.T) {
+func aTestSetLabel(t *testing.T) {
 
 	var expectedLabel = "test.LABEL"
 	t.Log("We need to test the SetLabel.")
@@ -333,7 +333,7 @@ func TestSetLabel(t *testing.T) {
 	}
 }
 
-func TestSetLabel2(t *testing.T) {
+func aTestSetLabel2(t *testing.T) {
 
 	var expectedLabel = "label.TEST"
 	t.Log("We need to test the SetLabel.")
@@ -366,6 +366,39 @@ func TestSetLabel2(t *testing.T) {
 	}
 }
 
+func TestSetHomeScreen(t *testing.T) {
 
+	t.Log("We need to test the SetHomeScreen.")
+	{
+		hs, err := tesoro.PNGToString("checked.png")
+		if err != nil {
+			t.Errorf("\t\tError reading homescreen: %s", err)
+		}
+		fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
+		_, msgType := common.Call(client, client.SetHomescreen(hs))
+		if msgType != 2 {
+			t.Errorf("\t\tExpected msgType=2, received %d", msgType)
+		} else {
+			t.Log("\t\tEverything went fine, \\ʕ◔ϖ◔ʔ/ YAY!")
+		}
+	}
+}
 
+func TestSetHomeScreen2(t *testing.T) {
+
+	t.Log("We need to test the SetHomeScreen (again).")
+	{
+		hs, err := tesoro.PNGToString("bunnyhome.png")
+		if err != nil {
+			t.Errorf("\t\tError reading homescreen: %s", err)
+		}
+		fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
+		_, msgType := common.Call(client, client.SetHomescreen(hs))
+		if msgType != 2 {
+			t.Errorf("\t\tExpected msgType=2, received %d", msgType)
+		} else {
+			t.Log("\t\tEverything went fine, \\ʕ◔ϖ◔ʔ/ YAY!")
+		}
+	}
+}
 
