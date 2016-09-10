@@ -8,6 +8,8 @@ import (
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/transport"
 	"github.com/conejoninja/tesoro/tests/common"
+	"encoding/json"
+	"github.com/conejoninja/tesoro/pb/messages"
 )
 
 var client tesoro.Client
@@ -187,7 +189,7 @@ func aTestGetEntropy(t *testing.T) {
 	}
 }
 
-func TestLoadDevice12(t *testing.T) {
+func aTestLoadDevice12(t *testing.T) {
 
 	t.Log("We need to test the LoadDevice.")
 	{
@@ -224,7 +226,7 @@ func TestLoadDevice12(t *testing.T) {
 	}
 }
 
-func TestLoadDevice18(t *testing.T) {
+func aTestLoadDevice18(t *testing.T) {
 
 	t.Log("We need to test the LoadDevice.")
 	{
@@ -261,7 +263,7 @@ func TestLoadDevice18(t *testing.T) {
 	}
 }
 
-func TestLoadDevice24(t *testing.T) {
+func aTestLoadDevice24(t *testing.T) {
 
 	t.Log("We need to test the LoadDevice.")
 	{
@@ -274,7 +276,7 @@ func TestLoadDevice24(t *testing.T) {
 				t.Errorf("\t\tExpected msgType=2, received %d", msgType)
 			} else {
 
-				t.Log("\t\tChecking LoadDevice with 24 words")
+				t.Log("\tChecking LoadDevice with 24 words")
 				{
 					fmt.Println("[WHAT TO DO] Click on \"I take the risk\"")
 					_, msgType = common.Call(client, client.LoadDevice(common.Mnemonic24, false, "", ""))
@@ -286,9 +288,9 @@ func TestLoadDevice24(t *testing.T) {
 							t.Errorf("\t\tExpected msgType=30, received %d", msgType)
 						} else {
 							if str != "13v1SDrc2qhXT8cgbYa83Nn6ac2jggYgre" {
-								t.Errorf("\t\t\tExpected str=13v1SDrc2qhXT8cgbYa83Nn6ac2jggYgre, received %s", str)
+								t.Errorf("\t\tExpected str=13v1SDrc2qhXT8cgbYa83Nn6ac2jggYgre, received %s", str)
 							} else {
-								t.Log("\t\t\tEverything went fine, \\ʕ◔ϖ◔ʔ/ YAY!")
+								t.Log("\t\tEverything went fine, \\ʕ◔ϖ◔ʔ/ YAY!")
 							}
 						}
 					}
@@ -297,3 +299,73 @@ func TestLoadDevice24(t *testing.T) {
 		}
 	}
 }
+
+func TestSetLabel(t *testing.T) {
+
+	var expectedLabel = "test.LABEL"
+	t.Log("We need to test the SetLabel.")
+	{
+		fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
+		str, msgType := common.Call(client, client.SetLabel(expectedLabel))
+
+		if msgType != 2 {
+			t.Errorf("\t\tExpected msgType=2, received %d", msgType)
+		} else {
+
+			t.Log("\tChecking SetLabel")
+			{
+				str, msgType = common.Call(client, client.GetFeatures())
+				if msgType != 17 {
+					t.Error("\t\tError initializing the device")
+				} else {
+					var features messages.Features
+					err := json.Unmarshal([]byte(str), &features)
+					if err == nil {
+						if features.GetLabel() != expectedLabel {
+							t.Errorf("\t\tExpected label=%s, received %s", expectedLabel, features.GetLabel())
+						} else {
+							t.Log("\t\tEverything went fine, \\ʕ◔ϖ◔ʔ/ YAY!")
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestSetLabel2(t *testing.T) {
+
+	var expectedLabel = "label.TEST"
+	t.Log("We need to test the SetLabel.")
+	{
+		fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
+		str, msgType := common.Call(client, client.SetLabel(expectedLabel))
+
+		if msgType != 2 {
+			t.Errorf("\t\tExpected msgType=2, received %d", msgType)
+		} else {
+
+			t.Log("\tChecking SetLabel")
+			{
+				str, msgType = common.Call(client, client.GetFeatures())
+				if msgType != 17 {
+					t.Error("\t\tError initializing the device")
+				} else {
+					var features messages.Features
+					err := json.Unmarshal([]byte(str), &features)
+					if err == nil {
+						if features.GetLabel() != expectedLabel {
+							t.Errorf("\t\tExpected label=%s, received %s", expectedLabel, features.GetLabel())
+						} else {
+							t.Log("\t\tEverything went fine, \\ʕ◔ϖ◔ʔ/ YAY!")
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+
+
+
