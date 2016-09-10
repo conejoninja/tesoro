@@ -16,20 +16,18 @@ $ go get github.com/conejoninja/tesoro
 None yet, it's a work in progress
 
 ## Supported methods
-* Initialize
-* Ping
-* ChangePin
-* GetEntropy
-* GetFeatures
-* GetAddress
-* GetPublicKey
-* SignMessage
-* SignIdentity
-* SetLabel
-* SetHomescreen
-* VerifyMessage
-* ClearSession
-* CipherKeyValue
+Almost everything is supported except *debuglink* related stuff. Transactions methods are done but not tested.
+
+## Tests
+Go to the *tests* folder and run them with
+```bash
+// Put your device in bootloader mode
+go test -v tesoro_bootloader_test.go
+// Disconnect and connect your device in normal mode
+go test -v tesoro_test.go
+```
+
+Running tests the *traditional* Go way (*go test*) will not work, as for tesoro_bootloader_test.go to run you need to put your device in *bootloader* mode, the rest of the tests are run in normal mode.
 
 ## Notes
 I wouldn't use for anything serious or important, it's still in development.  
