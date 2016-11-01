@@ -124,6 +124,7 @@ message Features {
 	optional bool imported = 15;			// was storage imported from an external source?
 	optional bool pin_cached = 16;			// is PIN already cached in session?
 	optional bool passphrase_cached = 17;		// is passphrase already cached in session?
+	optional bool firmware_present = 18;		// is valid firmware loaded?
 }
 
 /**
@@ -291,6 +292,7 @@ message GetAddress {
 	optional string coin_name = 2 [default='Bitcoin'];
 	optional bool show_display = 3;			// optionally show on display before sending the result
 	optional MultisigRedeemScriptType multisig = 4;	// Filled if we are showing a multisig address
+	optional InputScriptType script_type = 5 [default=SPENDADDRESS];	// Used to distinguish segwit addresses
 }
 
 /**
@@ -341,6 +343,7 @@ message LoadDevice {
 	optional string language = 5 [default='english'];	// device language
 	optional string label = 6;				// device label
 	optional bool skip_checksum = 7;			// do not test mnemonic for valid BIP-39 checksum
+	optional uint32 u2f_counter = 8;			// U2F counter
 }
 
 /**
@@ -355,6 +358,7 @@ message ResetDevice {
 	optional bool pin_protection = 4;			// enable PIN protection
 	optional string language = 5 [default='english'];	// device language
 	optional string label = 6;				// device label
+	optional uint32 u2f_counter = 7;			// U2F counter
 }
 
 /**
@@ -386,6 +390,7 @@ message RecoveryDevice {
 	optional string language = 4 [default='english'];	// device language
 	optional string label = 5;				// device label
 	optional bool enforce_wordlist = 6;			// enforce BIP-39 wordlist during the process
+	optional uint32 u2f_counter = 7;			// U2F counter
 }
 
 /**

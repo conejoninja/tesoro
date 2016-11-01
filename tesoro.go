@@ -325,12 +325,13 @@ func (c *Client) EntropyAck(entropy []byte) []byte {
 	return msg
 }
 
-func (c *Client) ResetDevice(displayRandom bool, strength uint32, passphraseProtection, pinProtection bool, label string) []byte {
+func (c *Client) ResetDevice(displayRandom bool, strength uint32, passphraseProtection, pinProtection bool, label string, U2FCounter uint32) []byte {
 	var m messages.ResetDevice
 	m.DisplayRandom = &displayRandom
 	m.Strength = &strength
 	m.PassphraseProtection = &passphraseProtection
 	m.PinProtection = &pinProtection
+	m.U2FCounter = &U2FCounter
 	if label != "" {
 		m.Label = &label
 	}
@@ -346,7 +347,7 @@ func (c *Client) ResetDevice(displayRandom bool, strength uint32, passphraseProt
 	return msg
 }
 
-func (c *Client) LoadDevice(mnemonic string, passphraseProtection bool, label, pin string) []byte {
+func (c *Client) LoadDevice(mnemonic string, passphraseProtection bool, label, pin string, SkipChecksum bool, U2FCounter uint32) []byte {
 	var m messages.LoadDevice
 	m.Mnemonic = &mnemonic
 	m.PassphraseProtection = &passphraseProtection
@@ -356,6 +357,8 @@ func (c *Client) LoadDevice(mnemonic string, passphraseProtection bool, label, p
 	if pin != "" {
 		m.Pin = &pin
 	}
+	m.SkipChecksum = &SkipChecksum
+	m.U2FCounter = &U2FCounter
 	marshalled, err := proto.Marshal(&m)
 
 	if err != nil {
@@ -404,12 +407,14 @@ func (c *Client) DecryptMessage(path string, nonce, message, hmac []byte) []byte
 	return msg
 }
 
-func (c *Client) RecoveryDevice(wordCount uint32, passphraseProtection, pinProtection bool, label string) []byte {
+func (c *Client) RecoveryDevice(wordCount uint32, passphraseProtection, pinProtection bool, label string, EnforceWordList bool, U2FCounter uint32) []byte {
 	var m messages.RecoveryDevice
 	m.WordCount = &wordCount
 	m.PassphraseProtection = &passphraseProtection
 	m.PinProtection = &pinProtection
 	m.Label = &label
+	m.EnforceWordlist = &EnforceWordList
+	m.U2FCounter = &U2FCounter
 
 	if label != "" {
 		m.Label = &label

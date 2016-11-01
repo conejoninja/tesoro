@@ -291,7 +291,7 @@ func shell() {
 			if len(args) > 5 {
 				label = args[5]
 			}
-			str, msgType = call(client.ResetDevice(displayRandom, strength, passphraseProtection, pinProtection, label))
+			str, msgType = call(client.ResetDevice(displayRandom, strength, passphraseProtection, pinProtection, label, 0))
 			break
 		case "loaddevice":
 			l := len(args)
@@ -319,7 +319,7 @@ func shell() {
 				if l >= wordCount+3 {
 					pin = args[wordCount+2]
 				}
-				str, msgType = call(client.LoadDevice(mnemonic, passphraseProtection, label, pin))
+				str, msgType = call(client.LoadDevice(mnemonic, passphraseProtection, label, pin, true, 0))
 			}
 			break
 		case "recoverydevice":
@@ -347,7 +347,7 @@ func shell() {
 					if l == 5 {
 						label = args[4]
 					}
-					str, msgType = call(client.RecoveryDevice(wordCount, passphraseProtection, pinProtection, label))
+					str, msgType = call(client.RecoveryDevice(wordCount, passphraseProtection, pinProtection, label, true, 0))
 				} else {
 					fmt.Println("Invalid word count. Use 12/18/24")
 				}
