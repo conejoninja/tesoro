@@ -28,6 +28,8 @@ import (
 
 	"log"
 
+	"reflect"
+
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/pb/types"
 	"github.com/conejoninja/tesoro/transport"
@@ -41,30 +43,30 @@ type Client struct {
 }
 
 type Storage struct {
-	Version string           `json:"version,omitempty"`
-	Config  Config           `json:"config,omitempty"`
-	Tags    map[string]Tag   `json:"tags,omitempty"`
-	Entries map[string]Entry `json:"entries,omitempty"`
+	Version string           `json:"version"`
+	Config  Config           `json:"config"`
+	Tags    map[string]Tag   `json:"tags"`
+	Entries map[string]Entry `json:"entries"`
 }
 
 type Config struct {
-	OrderType string `json:"orderType,omitempty"`
+	OrderType string `json:"orderType"`
 }
 
 type Tag struct {
-	Title  string `json:"title,omitempty"`
-	Icon   string `json:"icon,omitempty"`
-	Active string `json:"active,omitempty"`
+	Title  string `json:"title"`
+	Icon   string `json:"icon"`
+	Active string `json:"active"`
 }
 
 type Entry struct {
-	Title    string        `json:"title,omitempty"`
-	Username string        `json:"username,omitempty"`
-	Nonce    string        `json:"nonce,omitempty"`
-	Note     string        `json:"note,omitempty"`
-	Password EncryptedData `json:"password,omitempty"`
-	SafeNote EncryptedData `json:"safe_note,omitempty"`
-	Tags     []int         `json:"tags,omitempty"`
+	Title    string        `json:"title"`
+	Username string        `json:"username"`
+	Nonce    string        `json:"nonce"`
+	Note     string        `json:"note"`
+	Password EncryptedData `json:"password"`
+	SafeNote EncryptedData `json:"safe_note"`
+	Tags     []int         `json:"tags"`
 }
 
 type EncryptedData struct {
@@ -1148,4 +1150,21 @@ func EncryptStorage(s Storage, key string) []byte {
 	cipheredText := string(ciphered)
 	l := len(ciphered)
 	return []byte(string(nonce) + cipheredText[l-16:] + cipheredText[:l-16])
+}
+
+// TODO : Work on this
+func (e *Entry) Equal(entry Entry) bool {
+	if e.Title == entry.Title &&
+		e.Username == entry.Username &&
+		e.Nonce == entry.Nonce &&
+		e.Note == entry.Note &&
+		reflect.DeepEqual(e.Password.Data, entry.Password.Data) &&
+		e.Password.Type == entry.Password.Type &&
+		reflect.DeepEqual(e.SafeNote.Data, entry.SafeNote.Data) &&
+		e.SafeNote.Type == entry.SafeNote.Type &&
+		reflect.DeepEqual(e.Tags, entry.Tags) {
+		return true
+	}
+
+	return false
 }
