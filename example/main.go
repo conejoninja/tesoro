@@ -542,6 +542,7 @@ func shell() {
 				if err == nil {
 					// DECRYPT STORAGE
 					data, err := tesoro.DecryptStorage(content, encKey)
+					fmt.Println(data)
 					printStorage(data)
 
 					// Read entry to decrypt
@@ -698,10 +699,10 @@ func printEntry(id string, e tesoro.Entry) {
 		fmt.Print("-")
 	}
 	fmt.Println("")
+	fmt.Println("* title : ", e.Note)
+	fmt.Println("* item/url : ", e.Title)
 	fmt.Println("* username : ", e.Username)
 	fmt.Println("* tags : ", e.Tags)
-	fmt.Println("* title : ", e.Title)
-	fmt.Println("* note : ", e.Note)
 	fmt.Println("")
 }
 

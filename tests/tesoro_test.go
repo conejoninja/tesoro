@@ -39,7 +39,7 @@ func init() {
 	}
 }
 
-func aTestPing(t *testing.T) {
+func TestPing(t *testing.T) {
 
 	var expectedPing = "PONG"
 
@@ -63,7 +63,7 @@ func aTestPing(t *testing.T) {
 	}
 }
 
-func aTestPingButton(t *testing.T) {
+func TestPingButton(t *testing.T) {
 
 	var expectedPing = "PONG"
 
@@ -88,7 +88,7 @@ func aTestPingButton(t *testing.T) {
 	}
 }
 
-func aTestPingButtonCancel(t *testing.T) {
+func TestPingButtonCancel(t *testing.T) {
 
 	var expectedPing = "PONG"
 	var expectedString = "Ping cancelled"
@@ -114,7 +114,7 @@ func aTestPingButtonCancel(t *testing.T) {
 	}
 }
 
-func aTestInitialize(t *testing.T) {
+func TestInitialize(t *testing.T) {
 
 	t.Log("We need to test the Initialize.")
 	{
@@ -131,7 +131,7 @@ func aTestInitialize(t *testing.T) {
 	}
 }
 
-func aTestGetFeatures(t *testing.T) {
+func TestGetFeatures(t *testing.T) {
 
 	t.Log("We need to test the GetFeatures.")
 	{
@@ -148,7 +148,7 @@ func aTestGetFeatures(t *testing.T) {
 	}
 }
 
-func aTestClearSession(t *testing.T) {
+func TestClearSession(t *testing.T) {
 
 	t.Log("We need to test the ClearSession.")
 	{
@@ -165,7 +165,7 @@ func aTestClearSession(t *testing.T) {
 	}
 }
 
-func aTestGetEntropy(t *testing.T) {
+func TestGetEntropy(t *testing.T) {
 
 	fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
 	t.Log("We need to test the GetEntropy.")
@@ -205,7 +205,7 @@ func aTestLoadDevice12(t *testing.T) {
 				t.Log("\t\tChecking LoadDevice with 12 words")
 				{
 					fmt.Println("[WHAT TO DO] Click on \"I take the risk\"")
-					_, msgType = common.Call(client, client.LoadDevice(common.Mnemonic12, false, "", ""))
+					_, msgType = common.Call(client, client.LoadDevice(common.Mnemonic12, false, "", "", true, 0))
 					if msgType != 2 {
 						t.Errorf("\t\tExpected msgType=2, received %d", msgType)
 					} else {
@@ -242,7 +242,7 @@ func aTestLoadDevice18(t *testing.T) {
 				t.Log("\t\tChecking LoadDevice with 18 words")
 				{
 					fmt.Println("[WHAT TO DO] Click on \"I take the risk\"")
-					_, msgType = common.Call(client, client.LoadDevice(common.Mnemonic18, false, "", ""))
+					_, msgType = common.Call(client, client.LoadDevice(common.Mnemonic18, false, "", "", true, 0))
 					if msgType != 2 {
 						t.Errorf("\t\tExpected msgType=2, received %d", msgType)
 					} else {
@@ -263,7 +263,7 @@ func aTestLoadDevice18(t *testing.T) {
 	}
 }
 
-func aTestLoadDevice24(t *testing.T) {
+func TestLoadDevice24(t *testing.T) {
 
 	t.Log("We need to test the LoadDevice.")
 	{
@@ -279,7 +279,7 @@ func aTestLoadDevice24(t *testing.T) {
 				t.Log("\tChecking LoadDevice with 24 words")
 				{
 					fmt.Println("[WHAT TO DO] Click on \"I take the risk\"")
-					_, msgType = common.Call(client, client.LoadDevice(common.Mnemonic24, false, "", ""))
+					_, msgType = common.Call(client, client.LoadDevice(common.Mnemonic24, false, "", "", true, 0))
 					if msgType != 2 {
 						t.Errorf("\t\tExpected msgType=2, received %d", msgType)
 					} else {
@@ -300,7 +300,7 @@ func aTestLoadDevice24(t *testing.T) {
 	}
 }
 
-func aTestSetLabel(t *testing.T) {
+func TestSetLabel(t *testing.T) {
 
 	var expectedLabel = "test.LABEL"
 	t.Log("We need to test the SetLabel.")
@@ -333,7 +333,7 @@ func aTestSetLabel(t *testing.T) {
 	}
 }
 
-func aTestSetLabel2(t *testing.T) {
+func TestSetLabel2(t *testing.T) {
 
 	var expectedLabel = "label.TEST"
 	t.Log("We need to test the SetLabel.")

@@ -1145,6 +1145,7 @@ func EncryptStorage(s Storage, key string) []byte {
 	if err != nil {
 		log.Panic("Error encrypting")
 	}
+	fmt.Println("CONTENT=", string(content))
 
 	ciphered, nonce := AES256GCMMEncrypt(content, cipherKey)
 	cipheredText := string(ciphered)
@@ -1167,4 +1168,22 @@ func (e *Entry) Equal(entry Entry) bool {
 	}
 
 	return false
+}
+
+
+// TPM uses []int instead of []byte
+func (e EncryptedData) MarshalJSON() ([]byte, error) {
+
+	l := len(e.Data)
+	dataInt := make([]int, l)
+	for i:=0; i<l;i++ {
+		dataInt[i] = int(e.Data[i])
+	}
+	return json.Marshal(&struct {
+		Type string `json:"type"`
+		Data []int `json:"data"`
+	}{
+		Type: e.Type,
+		Data: dataInt,
+	})
 }
