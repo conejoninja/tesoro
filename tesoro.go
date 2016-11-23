@@ -1117,7 +1117,6 @@ func DecryptStorage(content, key string) (Storage, error) {
 	plainText, err := AES256GCMDecrypt([]byte(content[28:]+content[12:28]), cipherKey, []byte(content[:12]), []byte(content[12:28]))
 
 	if err != nil {
-		fmt.Println(err)
 		log.Panic("Error decrypting")
 	}
 
@@ -1145,7 +1144,6 @@ func EncryptStorage(s Storage, key string) []byte {
 	if err != nil {
 		log.Panic("Error encrypting")
 	}
-	fmt.Println("CONTENT=", string(content))
 
 	ciphered, nonce := AES256GCMMEncrypt(content, cipherKey)
 	cipheredText := string(ciphered)
