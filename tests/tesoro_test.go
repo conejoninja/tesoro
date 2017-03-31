@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/zserge/hid"
-	"github.com/conejoninja/tesoro"
-	"github.com/conejoninja/tesoro/transport"
-	"github.com/conejoninja/tesoro/tests/common"
 	"encoding/json"
+	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/pb/messages"
+	"github.com/conejoninja/tesoro/tests/common"
+	"github.com/conejoninja/tesoro/transport"
+	"github.com/zserge/hid"
 )
 
-var client tesoro.Client
+//var client tesoro.Client
 
 func init() {
 	numberDevices := 0
@@ -401,4 +401,3 @@ func TestSetHomeScreen2(t *testing.T) {
 		}
 	}
 }
-

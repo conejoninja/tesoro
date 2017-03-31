@@ -16,10 +16,10 @@ import (
 	"encoding/base64"
 
 	"github.com/chzyer/readline"
-	"github.com/zserge/hid"
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/transport"
+	"github.com/zserge/hid"
 )
 
 var client tesoro.Client

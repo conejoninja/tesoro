@@ -3,7 +3,9 @@ package tesoro
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
@@ -13,27 +15,20 @@ import (
 	"image"
 	_ "image/png"
 	"io"
+	"log"
 	"math"
+	"net/url"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"golang.org/x/text/unicode/norm"
-
-	"net/url"
-
-	"crypto/hmac"
-	"crypto/sha256"
-
-	"log"
-
-	"reflect"
 
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/pb/types"
 	"github.com/conejoninja/tesoro/transport"
 	"github.com/golang/protobuf/proto"
+	"golang.org/x/text/unicode/norm"
 )
 
 const hardkey uint32 = 2147483648
@@ -1168,18 +1163,17 @@ func (e *Entry) Equal(entry Entry) bool {
 	return false
 }
 
-
 // TPM uses []int instead of []byte
 func (e EncryptedData) MarshalJSON() ([]byte, error) {
 
 	l := len(e.Data)
 	dataInt := make([]int, l)
-	for i:=0; i<l;i++ {
+	for i := 0; i < l; i++ {
 		dataInt[i] = int(e.Data[i])
 	}
 	return json.Marshal(&struct {
 		Type string `json:"type"`
-		Data []int `json:"data"`
+		Data []int  `json:"data"`
 	}{
 		Type: e.Type,
 		Data: dataInt,
