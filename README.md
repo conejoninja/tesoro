@@ -29,9 +29,6 @@ go test -v tesoro_test.go
 
 Running tests the *traditional* Go way (*go test*) will not work, as for tesoro_bootloader_test.go to run you need to put your device in *bootloader* mode, the rest of the tests are run in normal mode.
 
-## Notes
-I wouldn't use for anything serious or important, it's still in development.  
-
 ## Contributing to this project:
 
 If you find any improvement or issue you want to fix, feel free to send me a pull request.
@@ -54,3 +51,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+
+## Notes
+
+![](https://raw.githubusercontent.com/conejoninja/cerrojo/master/assets/ribbon.png)
+
+If you would like to donate via Bitcoin, please send your donation to this wallet:
+
+   ![](https://raw.githubusercontent.com/conejoninja/cerrojo/master/assets/qr.png)
+
+Bitcoin: **1G9d7uVvioNt8Emsv6fVmCdAPc41nX1c8J**
