@@ -1116,6 +1116,7 @@ func DecryptStorage(content, key string) (Storage, error) {
 	}
 
 	var pc Storage
+	fmt.Println(string(plainText))
 	err = json.Unmarshal(plainText, &pc)
 	return pc, err
 }
