@@ -33,7 +33,9 @@ func main() {
 		// 0x534c : 21324 vendor
 		// 0x0001 : 1     product
 		// 0x00   : Main Trezor Interface
-		if info.Vendor == 21324 && info.Product == 1 && info.Interface == 0 {
+		fmt.Println("DEVICE", info.Vendor, info.Product, info.Interface)
+		if (info.Vendor == 21324 && info.Product == 1 && info.Interface == 0) ||
+			(info.Vendor == 4617 && info.Product ==21441 && info.Interface == 1) {
 			numberDevices++
 			var t transport.TransportHID
 			t.SetDevice(device)
