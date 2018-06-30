@@ -18,8 +18,8 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/pb/messages"
-	"github.com/trezor/usbhid"
 	"github.com/conejoninja/tesoro/transport"
+	"github.com/trezor/usbhid"
 )
 
 var client tesoro.Client
@@ -27,6 +27,7 @@ var prompt *readline.Instance
 
 func main() {
 	numberDevices := 0
+
 	var usbctx usbhid.Context
 
 	list, err := usbhid.Get_Device_List(usbctx)
@@ -73,11 +74,6 @@ func main() {
 				}
 				inset := paths[path]
 				if !inset {
-					/*infos = append(infos, Info{
-						Path:      path,
-						VendorID:  int(dd.IdVendor),
-						ProductID: int(dd.IdProduct),
-					})*/
 					fmt.Println("DEVICE [Path]", path, "[VendorID]", int(dd.IdVendor), "[ProductID]", int(dd.IdProduct))
 					paths[path] = true
 					numberDevices++
@@ -106,7 +102,7 @@ func main() {
 		// 0x00   : Main Trezor Interface
 		fmt.Println("DEVICE", info.Vendor, info.Product, info.Interface)
 		if (info.Vendor == 21324 && info.Product == 1 && info.Interface == 0) ||
-			(info.Vendor == 4617 && info.Product ==21441 && info.Interface == 1) {
+			(info.Vendor == 4617 && info.Product == 21441 && info.Interface == 1) {
 			numberDevices++
 			var t transport.TransportHID
 			t.SetDevice(device)
@@ -121,7 +117,7 @@ func main() {
 		fmt.Printf("Found %d TREZOR devices connected\n", numberDevices)
 		shell()
 		defer client.CloseTransport()
-	}*/
+	} */
 }
 
 func call(msg []byte) (string, uint16) {
