@@ -18,8 +18,8 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/pb/messages"
+	"github.com/trezor/usbhid"
 	"github.com/conejoninja/tesoro/transport"
-	"github.com/zserge/hid"
 )
 
 var client tesoro.Client
@@ -27,7 +27,78 @@ var prompt *readline.Instance
 
 func main() {
 	numberDevices := 0
-	hid.UsbWalk(func(device hid.Device) {
+	var usbctx usbhid.Context
+
+	list, err := usbhid.Get_Device_List(usbctx)
+
+	if err != nil {
+		fmt.Println("Get_Device_List error", list, err)
+	}
+
+	defer func() {
+		usbhid.Free_Device_List(list, 1) // unlink devices
+	}()
+
+	paths := make(map[string]bool)
+
+	for _, dev := range list {
+
+		// MATCH
+
+		c, err := usbhid.Get_Active_Config_Descriptor(dev)
+		if err != nil {
+			fmt.Println("webusb - match - error getting config descriptor " + err.Error())
+		}
+		match := (c.BNumInterfaces > 0 &&
+			c.Interface[0].Num_altsetting > 0 &&
+			c.Interface[0].Altsetting[0].BInterfaceClass == usbhid.CLASS_VENDOR_SPEC)
+
+		// END MATCH
+
+		if match {
+			dd, err := usbhid.Get_Device_Descriptor(dev)
+			if err != nil {
+				continue
+			}
+
+			trezor2 := dd.IdVendor == 4617 && dd.IdProduct == 21441
+
+			if trezor2 {
+
+				path := ""
+				var ports [8]byte
+				p, err := usbhid.Get_Port_Numbers(dev, ports[:])
+				if err == nil {
+					path = "web" + hex.EncodeToString(p)
+				}
+				inset := paths[path]
+				if !inset {
+					/*infos = append(infos, Info{
+						Path:      path,
+						VendorID:  int(dd.IdVendor),
+						ProductID: int(dd.IdProduct),
+					})*/
+					fmt.Println("DEVICE [Path]", path, "[VendorID]", int(dd.IdVendor), "[ProductID]", int(dd.IdProduct))
+					paths[path] = true
+					numberDevices++
+					var t transport.TransportWebUSB
+					t.SetDevice(dev)
+					client.SetTransport(&t)
+					break
+				}
+			}
+		}
+	}
+
+	if numberDevices == 0 {
+		fmt.Println("No TREZOR devices found, make sure your device is connected")
+	} else {
+		fmt.Printf("Found %d TREZOR devices connected\n", numberDevices)
+		shell()
+		defer client.CloseTransport()
+	}
+
+	/*hid.UsbWalk(func(device hid.Device) {
 		info := device.Info()
 		// TREZOR
 		// 0x534c : 21324 vendor
@@ -50,7 +121,7 @@ func main() {
 		fmt.Printf("Found %d TREZOR devices connected\n", numberDevices)
 		shell()
 		defer client.CloseTransport()
-	}
+	}*/
 }
 
 func call(msg []byte) (string, uint16) {
