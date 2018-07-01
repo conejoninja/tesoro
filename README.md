@@ -1,4 +1,4 @@
-TESORO
+TESORO [![Build Status](https://travis-ci.org/conejoninja/tesoro.svg?branch=master)](https://travis-ci.org/conejoninja/tesoro)
 ======
 Go package to work with [TREZOR devices](http://bitcointrezor.com/). This repository is an unofficial package written in Go (golang), for any official package, code or tool, please go to the official [TREZOR repository](https://github.com/trezor)
 

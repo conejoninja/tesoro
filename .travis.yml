@@ -1,0 +1,11 @@
+language: go
+
+go:
+  - 1.7.x # Debian 9 Stretch
+  - 1.8.x
+  - 1.9.x
+  - 1.10.x
+  - stable
+
+script:
+  - go build -v . ./examples/...
