@@ -12,11 +12,13 @@ TREZOR is a single purpose device which allows you to make secure Bitcoin transa
 $ go get github.com/conejoninja/tesoro
 ```
 
-## Documentation
-None yet, it's a work in progress
+## Examples
+*examples/hid*: only compatible with Linux (and Linux based), pure go, no libusb dependency.
+ 
+*examples/webusb*: compatible with Trezor One and model T, should be able to run in Linux, Mac OSX and Windows. It depends on libusb. 
 
 ## Supported methods
-Almost everything is supported except *debuglink* related stuff. Transactions methods are done but not tested.
+*Some**
 
 ## Tests
 Go to the *tests* folder and run them with
@@ -32,6 +34,9 @@ Running tests the *traditional* Go way (*go test*) will not work, as for tesoro_
 ## Contributing to this project:
 
 If you find any improvement or issue you want to fix, feel free to send me a pull request.
+
+## Cerrojo
+For a similar project, compatible with both, KeepKey and Trezor One, take a look at [CERROJO repository](https://github.com/conejoninja/cerrojo).
 
 ## License
 
