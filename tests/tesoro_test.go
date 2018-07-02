@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"encoding/json"
+	"time"
+
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/tests/common"
@@ -12,21 +14,18 @@ import (
 	"github.com/zserge/hid"
 )
 
-//var client tesoro.Client
+var testClient tesoro.Client
 
 func init() {
 	numberDevices := 0
+
 	hid.UsbWalk(func(device hid.Device) {
 		info := device.Info()
-		// TREZOR
-		// 0x534c : 21324 vendor
-		// 0x0001 : 1     product
-		// 0x00   : Main Trezor Interface
-		if info.Vendor == 21324 && info.Product == 1 && info.Interface == 0 {
+		if info.Vendor == transport.VendorOne && info.Product == transport.ProductOne && info.Interface == 0 {
 			numberDevices++
 			var t transport.TransportHID
 			t.SetDevice(device)
-			client.SetTransport(&t)
+			testClient.SetTransport(&t)
 			return
 		}
 
@@ -35,8 +34,9 @@ func init() {
 		fmt.Println("No TREZOR devices found, make sure your device is connected")
 	} else {
 		fmt.Printf("Found %d TREZOR devices connected\n", numberDevices)
-		//defer client.CloseTransport()
 	}
+	// Introduce delay, or it's too fast and it will fail the tests
+	time.Sleep(1 * time.Second)
 }
 
 func TestPing(t *testing.T) {
@@ -48,7 +48,9 @@ func TestPing(t *testing.T) {
 		t.Logf("\tChecking PING for response \"%s\"",
 			expectedPing)
 		{
-			str, msgType := common.Call(client, client.Ping(expectedPing, false, false, false))
+			fmt.Println("PRE-ASDF")
+			str, msgType := common.Call(testClient, testClient.Ping(expectedPing, false, false, false))
+			fmt.Println("ASDF", str, msgType)
 
 			if msgType != 2 {
 				t.Errorf("\t\tExpected msgType=2, received %d", msgType)
@@ -73,7 +75,7 @@ func TestPingButton(t *testing.T) {
 		t.Logf("\tChecking PING for response \"%s\"",
 			expectedPing)
 		{
-			str, msgType := common.Call(client, client.Ping(expectedPing, false, false, true))
+			str, msgType := common.Call(testClient, testClient.Ping(expectedPing, false, false, true))
 
 			if msgType != 2 {
 				t.Errorf("\t\tExpected msgType=2, received %d", msgType)
@@ -91,7 +93,7 @@ func TestPingButton(t *testing.T) {
 func TestPingButtonCancel(t *testing.T) {
 
 	var expectedPing = "PONG"
-	var expectedString = "Ping cancelled"
+	var expectedString = "Action cancelled by user"
 
 	fmt.Println("[WHAT TO DO] Click on \"Cancel\"")
 	t.Log("We need to test the PING.")
@@ -99,7 +101,7 @@ func TestPingButtonCancel(t *testing.T) {
 		t.Logf("\tChecking PING for response \"%s\"",
 			expectedPing)
 		{
-			str, msgType := common.Call(client, client.Ping(expectedPing, false, false, true))
+			str, msgType := common.Call(testClient, testClient.Ping(expectedPing, false, false, true))
 
 			if msgType != 3 {
 				t.Errorf("\t\tExpected msgType=3, received %d", msgType)
@@ -120,7 +122,7 @@ func TestInitialize(t *testing.T) {
 	{
 		t.Log("\tChecking Initialize for response ")
 		{
-			_, msgType := common.Call(client, client.Initialize())
+			_, msgType := common.Call(testClient, testClient.Initialize())
 
 			if msgType != 17 {
 				t.Errorf("\t\tExpected msgType=17, received %d", msgType)
@@ -137,7 +139,7 @@ func TestGetFeatures(t *testing.T) {
 	{
 		t.Log("\tChecking GetFeatures for response ")
 		{
-			_, msgType := common.Call(client, client.GetFeatures())
+			_, msgType := common.Call(testClient, testClient.GetFeatures())
 
 			if msgType != 17 {
 				t.Errorf("\t\tExpected msgType=17, received %d", msgType)
@@ -154,7 +156,7 @@ func TestClearSession(t *testing.T) {
 	{
 		t.Log("\tChecking ClearSession for response ")
 		{
-			_, msgType := common.Call(client, client.ClearSession())
+			_, msgType := common.Call(testClient, testClient.ClearSession())
 
 			if msgType != 2 {
 				t.Errorf("\t\tExpected msgType=2, received %d", msgType)
@@ -172,7 +174,7 @@ func TestGetEntropy(t *testing.T) {
 	{
 		t.Log("\tChecking GetEntropy for response ")
 		{
-			str, msgType := common.Call(client, client.GetEntropy(8))
+			str, msgType := common.Call(testClient, testClient.GetEntropy(8))
 
 			if msgType != 10 {
 				t.Errorf("\t\tExpected msgType=10, received %d", msgType)
@@ -196,7 +198,7 @@ func aTestLoadDevice12(t *testing.T) {
 		t.Log("\tWe need to wipe it first")
 		{
 			fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
-			_, msgType := common.Call(client, client.WipeDevice())
+			_, msgType := common.Call(testClient, testClient.WipeDevice())
 
 			if msgType != 2 {
 				t.Errorf("\t\tExpected msgType=2, received %d", msgType)
@@ -205,11 +207,11 @@ func aTestLoadDevice12(t *testing.T) {
 				t.Log("\t\tChecking LoadDevice with 12 words")
 				{
 					fmt.Println("[WHAT TO DO] Click on \"I take the risk\"")
-					_, msgType = common.Call(client, client.LoadDevice(common.Mnemonic12, false, "", "", true, 0))
+					_, msgType = common.Call(testClient, testClient.LoadDevice(common.Mnemonic12, false, "", "", true, 0))
 					if msgType != 2 {
 						t.Errorf("\t\tExpected msgType=2, received %d", msgType)
 					} else {
-						str, msgType := common.Call(client, client.GetAddress(tesoro.StringToBIP32Path(common.DefaultPath), false, common.DefaultCoin))
+						str, msgType := common.Call(testClient, testClient.GetAddress(tesoro.StringToBIP32Path(common.DefaultPath), false, common.DefaultCoin))
 						if msgType != 30 {
 							t.Errorf("\t\tExpected msgType=30, received %d", msgType)
 						} else {
@@ -233,7 +235,7 @@ func aTestLoadDevice18(t *testing.T) {
 		t.Log("\tWe need to wipe it first")
 		{
 			fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
-			_, msgType := common.Call(client, client.WipeDevice())
+			_, msgType := common.Call(testClient, testClient.WipeDevice())
 
 			if msgType != 2 {
 				t.Errorf("\t\tExpected msgType=2, received %d", msgType)
@@ -242,11 +244,11 @@ func aTestLoadDevice18(t *testing.T) {
 				t.Log("\t\tChecking LoadDevice with 18 words")
 				{
 					fmt.Println("[WHAT TO DO] Click on \"I take the risk\"")
-					_, msgType = common.Call(client, client.LoadDevice(common.Mnemonic18, false, "", "", true, 0))
+					_, msgType = common.Call(testClient, testClient.LoadDevice(common.Mnemonic18, false, "", "", true, 0))
 					if msgType != 2 {
 						t.Errorf("\t\tExpected msgType=2, received %d", msgType)
 					} else {
-						str, msgType := common.Call(client, client.GetAddress(tesoro.StringToBIP32Path(common.DefaultPath), false, common.DefaultCoin))
+						str, msgType := common.Call(testClient, testClient.GetAddress(tesoro.StringToBIP32Path(common.DefaultPath), false, common.DefaultCoin))
 						if msgType != 30 {
 							t.Errorf("\t\tExpected msgType=30, received %d", msgType)
 						} else {
@@ -270,7 +272,7 @@ func TestLoadDevice24(t *testing.T) {
 		t.Log("\tWe need to wipe it first")
 		{
 			fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
-			_, msgType := common.Call(client, client.WipeDevice())
+			_, msgType := common.Call(testClient, testClient.WipeDevice())
 
 			if msgType != 2 {
 				t.Errorf("\t\tExpected msgType=2, received %d", msgType)
@@ -279,11 +281,11 @@ func TestLoadDevice24(t *testing.T) {
 				t.Log("\tChecking LoadDevice with 24 words")
 				{
 					fmt.Println("[WHAT TO DO] Click on \"I take the risk\"")
-					_, msgType = common.Call(client, client.LoadDevice(common.Mnemonic24, false, "", "", true, 0))
+					_, msgType = common.Call(testClient, testClient.LoadDevice(common.Mnemonic24, false, "", "", true, 0))
 					if msgType != 2 {
 						t.Errorf("\t\tExpected msgType=2, received %d", msgType)
 					} else {
-						str, msgType := common.Call(client, client.GetAddress(tesoro.StringToBIP32Path(common.DefaultPath), false, common.DefaultCoin))
+						str, msgType := common.Call(testClient, testClient.GetAddress(tesoro.StringToBIP32Path(common.DefaultPath), false, common.DefaultCoin))
 						if msgType != 30 {
 							t.Errorf("\t\tExpected msgType=30, received %d", msgType)
 						} else {
@@ -306,7 +308,7 @@ func TestSetLabel(t *testing.T) {
 	t.Log("We need to test the SetLabel.")
 	{
 		fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
-		str, msgType := common.Call(client, client.SetLabel(expectedLabel))
+		str, msgType := common.Call(testClient, testClient.SetLabel(expectedLabel))
 
 		if msgType != 2 {
 			t.Errorf("\t\tExpected msgType=2, received %d", msgType)
@@ -314,7 +316,7 @@ func TestSetLabel(t *testing.T) {
 
 			t.Log("\tChecking SetLabel")
 			{
-				str, msgType = common.Call(client, client.GetFeatures())
+				str, msgType = common.Call(testClient, testClient.GetFeatures())
 				if msgType != 17 {
 					t.Error("\t\tError initializing the device")
 				} else {
@@ -339,7 +341,7 @@ func TestSetLabel2(t *testing.T) {
 	t.Log("We need to test the SetLabel.")
 	{
 		fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
-		str, msgType := common.Call(client, client.SetLabel(expectedLabel))
+		str, msgType := common.Call(testClient, testClient.SetLabel(expectedLabel))
 
 		if msgType != 2 {
 			t.Errorf("\t\tExpected msgType=2, received %d", msgType)
@@ -347,7 +349,7 @@ func TestSetLabel2(t *testing.T) {
 
 			t.Log("\tChecking SetLabel")
 			{
-				str, msgType = common.Call(client, client.GetFeatures())
+				str, msgType = common.Call(testClient, testClient.GetFeatures())
 				if msgType != 17 {
 					t.Error("\t\tError initializing the device")
 				} else {
@@ -375,7 +377,7 @@ func TestSetHomeScreen(t *testing.T) {
 			t.Errorf("\t\tError reading homescreen: %s", err)
 		}
 		fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
-		_, msgType := common.Call(client, client.SetHomescreen(hs))
+		_, msgType := common.Call(testClient, testClient.SetHomescreen(hs))
 		if msgType != 2 {
 			t.Errorf("\t\tExpected msgType=2, received %d", msgType)
 		} else {
@@ -393,7 +395,7 @@ func TestSetHomeScreen2(t *testing.T) {
 			t.Errorf("\t\tError reading homescreen: %s", err)
 		}
 		fmt.Println("[WHAT TO DO] Click on \"Confirm\"")
-		_, msgType := common.Call(client, client.SetHomescreen(hs))
+		_, msgType := common.Call(testClient, testClient.SetHomescreen(hs))
 		if msgType != 2 {
 			t.Errorf("\t\tExpected msgType=2, received %d", msgType)
 		} else {

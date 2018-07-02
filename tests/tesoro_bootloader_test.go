@@ -38,7 +38,7 @@ func init() {
 		fmt.Println("No TREZOR devices found, make sure your device is connected")
 	} else {
 		fmt.Printf("Found %d TREZOR devices connected\n", numberDevices)
-		//defer client.CloseTransport()
+		//defer testClient.CloseTransport()
 	}
 }
 
