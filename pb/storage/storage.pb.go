@@ -3,9 +3,14 @@
 
 package storage
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+
+	"github.com/conejoninja/tesoro/pb/types"
+	proto "github.com/golang/protobuf/proto"
+
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -21,23 +26,23 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 // *
 // Internal persistent storage of device
 type Storage struct {
-	Version              *uint32     `protobuf:"varint,1,req,name=version" json:"version,omitempty"`
-	Node                 *HDNodeType `protobuf:"bytes,2,opt,name=node" json:"node,omitempty"`
-	Mnemonic             *string     `protobuf:"bytes,3,opt,name=mnemonic" json:"mnemonic,omitempty"`
-	PassphraseProtection *bool       `protobuf:"varint,4,opt,name=passphrase_protection,json=passphraseProtection" json:"passphrase_protection,omitempty"`
-	PinFailedAttempts    *uint32     `protobuf:"varint,5,opt,name=pin_failed_attempts,json=pinFailedAttempts" json:"pin_failed_attempts,omitempty"`
-	Pin                  *string     `protobuf:"bytes,6,opt,name=pin" json:"pin,omitempty"`
-	Language             *string     `protobuf:"bytes,7,opt,name=language" json:"language,omitempty"`
-	Label                *string     `protobuf:"bytes,8,opt,name=label" json:"label,omitempty"`
-	Imported             *bool       `protobuf:"varint,9,opt,name=imported" json:"imported,omitempty"`
-	Homescreen           []byte      `protobuf:"bytes,10,opt,name=homescreen" json:"homescreen,omitempty"`
-	U2FCounter           *uint32     `protobuf:"varint,11,opt,name=u2f_counter,json=u2fCounter" json:"u2f_counter,omitempty"`
-	NeedsBackup          *bool       `protobuf:"varint,12,opt,name=needs_backup,json=needsBackup" json:"needs_backup,omitempty"`
-	Flags                *uint32     `protobuf:"varint,13,opt,name=flags" json:"flags,omitempty"`
-	U2Froot              *HDNodeType `protobuf:"bytes,14,opt,name=u2froot" json:"u2froot,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
+	Version              *uint32           `protobuf:"varint,1,req,name=version" json:"version,omitempty"`
+	Node                 *types.HDNodeType `protobuf:"bytes,2,opt,name=node" json:"node,omitempty"`
+	Mnemonic             *string           `protobuf:"bytes,3,opt,name=mnemonic" json:"mnemonic,omitempty"`
+	PassphraseProtection *bool             `protobuf:"varint,4,opt,name=passphrase_protection,json=passphraseProtection" json:"passphrase_protection,omitempty"`
+	PinFailedAttempts    *uint32           `protobuf:"varint,5,opt,name=pin_failed_attempts,json=pinFailedAttempts" json:"pin_failed_attempts,omitempty"`
+	Pin                  *string           `protobuf:"bytes,6,opt,name=pin" json:"pin,omitempty"`
+	Language             *string           `protobuf:"bytes,7,opt,name=language" json:"language,omitempty"`
+	Label                *string           `protobuf:"bytes,8,opt,name=label" json:"label,omitempty"`
+	Imported             *bool             `protobuf:"varint,9,opt,name=imported" json:"imported,omitempty"`
+	Homescreen           []byte            `protobuf:"bytes,10,opt,name=homescreen" json:"homescreen,omitempty"`
+	U2FCounter           *uint32           `protobuf:"varint,11,opt,name=u2f_counter,json=u2fCounter" json:"u2f_counter,omitempty"`
+	NeedsBackup          *bool             `protobuf:"varint,12,opt,name=needs_backup,json=needsBackup" json:"needs_backup,omitempty"`
+	Flags                *uint32           `protobuf:"varint,13,opt,name=flags" json:"flags,omitempty"`
+	U2Froot              *types.HDNodeType `protobuf:"bytes,14,opt,name=u2froot" json:"u2froot,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
 }
 
 func (m *Storage) Reset()         { *m = Storage{} }
@@ -71,7 +76,7 @@ func (m *Storage) GetVersion() uint32 {
 	return 0
 }
 
-func (m *Storage) GetNode() *HDNodeType {
+func (m *Storage) GetNode() *types.HDNodeType {
 	if m != nil {
 		return m.Node
 	}
@@ -155,7 +160,7 @@ func (m *Storage) GetFlags() uint32 {
 	return 0
 }
 
-func (m *Storage) GetU2Froot() *HDNodeType {
+func (m *Storage) GetU2Froot() *types.HDNodeType {
 	if m != nil {
 		return m.U2Froot
 	}
