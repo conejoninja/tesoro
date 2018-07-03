@@ -6,7 +6,7 @@ package config
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import protobuf "google/protobuf"
+import protobuf "github.com/conejoninja/tesoro/pb/google/protobuf"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal

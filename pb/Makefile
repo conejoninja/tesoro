@@ -10,10 +10,10 @@ types.pb: $(TREZOR_COMMON)/types.proto
 	protoc --proto_path=$(TREZOR_COMMON) --go_out=types $<
 
 config.pb: $(TREZOR_COMMON)/config.proto
-	protoc --proto_path=$(TREZOR_COMMON) --go_out=. $<
+	protoc --proto_path=$(TREZOR_COMMON) --go_out=config $<
 
 storage.pb: $(TREZOR_COMMON)/storage.proto
-	protoc --proto_path=$(TREZOR_COMMON) --go_out=. $<
+	protoc --proto_path=$(TREZOR_COMMON) --go_out=storage $<
 
 clean:
 	rm -f *.pb *.pb.go
