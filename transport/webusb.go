@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/trezor/usbhid"
-	)
+)
 
 const (
 	webusbPrefix  = "web"
@@ -121,7 +121,6 @@ func (t *TransportWebUSB) readWrite(buf []byte, endpoint uint8) (int, error) {
 	}
 }
 
-
 func (t *TransportWebUSB) Write(msg []byte) {
 	for len(msg) > 0 && t.device != nil {
 		blank := make([]byte, 64)
@@ -177,5 +176,3 @@ func (t *TransportWebUSB) Read() ([]byte, uint16, int, error) {
 	}
 	return marshalled, 999, 0, err
 }
-
-
