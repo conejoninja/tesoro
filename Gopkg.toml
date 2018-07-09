@@ -39,10 +39,6 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/trezor/usbhid"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/zserge/hid"
 
 [[constraint]]
@@ -51,3 +47,7 @@
 
 [prune]
   go-tests = true
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/trezor/trezord-go"

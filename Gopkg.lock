@@ -11,7 +11,7 @@
   branch = "master"
   name = "github.com/conejoninja/hid"
   packages = ["."]
-  revision = "fb96e1d12458ec38acda10b8bf04583f600c7747"
+  revision = "26f3555a38d8cdb2ba17ea83e56915e32e05d54a"
 
 [[projects]]
   name = "github.com/golang/protobuf"
@@ -21,9 +21,9 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/trezor/usbhid"
-  packages = ["."]
-  revision = "5b31741cbf8db763c7276bb290a1390bbd17914d"
+  name = "github.com/trezor/trezord-go"
+  packages = ["usb/lowlevel"]
+  revision = "2d224e6e52de1d14fbb31acbe7a377b77d943075"
 
 [[projects]]
   branch = "master"
@@ -47,6 +47,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5a67d11d131935a619fd3ab3277052a57fd841f19a347cf72cb47b624d3c6175"
+  inputs-digest = "f985bbe91b1d8ce8ab940e7fcbf0fc14b579dbeef5002486d7b22cb5ca072458"
   solver-name = "gps-cdcl"
   solver-version = 1

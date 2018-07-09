@@ -9,7 +9,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/trezor/usbhid"
+	"github.com/trezor/trezord-go/usb/lowlevel"
 )
 
 const (
@@ -23,49 +23,49 @@ const (
 )
 
 type TransportWebUSB struct {
-	device        usbhid.Device_Handle
+	device        lowlevel.Device_Handle
 	closed        int32
 	transferMutex sync.Mutex
 }
 
-func (t *TransportWebUSB) SetDevice(device usbhid.Device) {
-	d, err := usbhid.Open(device)
+func (t *TransportWebUSB) SetDevice(device lowlevel.Device) {
+	d, err := lowlevel.Open(device)
 	if err != nil {
 		log.Fatal("Could not open WebUSB", err)
 	}
 
-	err = usbhid.Reset_Device(d)
+	err = lowlevel.Reset_Device(d)
 	if err != nil {
 		// don't abort if reset fails
-		// usbhid.Close(d)
+		// lowlevel.Close(d)
 		// return nil, err
 	}
 
-	currConf, err := usbhid.Get_Configuration(d)
+	currConf, err := lowlevel.Get_Configuration(d)
 	if err != nil {
 		log.Fatalf("webusb - connect - current configuration err %s", err.Error())
 	} else {
 		fmt.Printf("webusb - connect - current configuration %d\n", currConf)
 	}
 
-	err = usbhid.Set_Configuration(d, webConfigNum)
+	err = lowlevel.Set_Configuration(d, webConfigNum)
 	if err != nil {
 		// don't abort if set configuration fails
-		// usbhid.Close(d)
+		// lowlevel.Close(d)
 		// return nil, err
 		fmt.Printf("Warning: error at configuration set: %s\n", err)
 	}
 
-	currConf, err = usbhid.Get_Configuration(d)
+	currConf, err = lowlevel.Get_Configuration(d)
 	if err != nil {
 		fmt.Printf("webusb - connect - current configuration err %s\n", err.Error())
 	} else {
 		fmt.Printf("webusb - connect - current configuration %d\n", currConf)
 	}
 
-	err = usbhid.Claim_Interface(d, webIfaceNum)
+	err = lowlevel.Claim_Interface(d, webIfaceNum)
 	if err != nil {
-		usbhid.Close(d)
+		lowlevel.Close(d)
 		log.Fatal("webusb - connect - claiming interface failed", err)
 	}
 
@@ -76,7 +76,7 @@ func (t *TransportWebUSB) Close() {
 	atomic.StoreInt32(&t.closed, 1)
 	t.finishReadQueue()
 	t.transferMutex.Lock()
-	usbhid.Close(t.device)
+	lowlevel.Close(t.device)
 	t.transferMutex.Unlock()
 }
 
@@ -86,7 +86,7 @@ func (t *TransportWebUSB) finishReadQueue() {
 	var buf [64]byte
 
 	for err == nil {
-		_, err = usbhid.Interrupt_Transfer(t.device, webEpIn, buf[:], 50)
+		_, err = lowlevel.Interrupt_Transfer(t.device, webEpIn, buf[:], 50)
 	}
 	t.transferMutex.Unlock()
 }
@@ -99,7 +99,7 @@ func (t *TransportWebUSB) readWrite(buf []byte, endpoint uint8) (int, error) {
 		}
 
 		t.transferMutex.Lock()
-		p, err := usbhid.Interrupt_Transfer(t.device, endpoint, buf, usbTimeout)
+		p, err := lowlevel.Interrupt_Transfer(t.device, endpoint, buf, usbTimeout)
 		t.transferMutex.Unlock()
 
 		if err == nil {
@@ -109,12 +109,12 @@ func (t *TransportWebUSB) readWrite(buf []byte, endpoint uint8) (int, error) {
 		}
 
 		if err != nil {
-			if err.Error() == usbhid.Error_Name(int(usbhid.ERROR_IO)) ||
-				err.Error() == usbhid.Error_Name(int(usbhid.ERROR_NO_DEVICE)) {
+			if err.Error() == lowlevel.Error_Name(int(lowlevel.ERROR_IO)) ||
+				err.Error() == lowlevel.Error_Name(int(lowlevel.ERROR_NO_DEVICE)) {
 				return 0, errors.New("device disconnected during action")
 			}
 
-			if err.Error() != usbhid.Error_Name(int(usbhid.ERROR_TIMEOUT)) {
+			if err.Error() != lowlevel.Error_Name(int(lowlevel.ERROR_TIMEOUT)) {
 				return 0, err
 			}
 		}
