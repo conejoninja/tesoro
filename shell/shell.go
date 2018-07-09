@@ -581,8 +581,8 @@ func NewShell(client *tesoro.Client) {
 					var eNonce string
 					eNonce, msgType = s.call(s.client.SetEntryNonce(entry.Title, entry.Username, nonce))
 					entry.Nonce = hex.EncodeToString([]byte(eNonce))
-					entry.Password = tesoro.EncryptedData{"Buffer", tesoro.EncryptEntry("\"MySecretPassword"+rnd+"\"", nonce)}
-					entry.SafeNote = tesoro.EncryptedData{"Buffer", tesoro.EncryptEntry("\"My Safe Note is safe "+rnd+"\"", nonce)}
+					entry.Password = tesoro.EncryptedData{Type: "Buffer", Data: tesoro.EncryptEntry("\"MySecretPassword"+rnd+"\"", nonce)}
+					entry.SafeNote = tesoro.EncryptedData{Type: "Buffer", Data: tesoro.EncryptEntry("\"My Safe Note is safe "+rnd+"\"", nonce)}
 
 					max := 0
 					for k, _ := range data.Entries {
