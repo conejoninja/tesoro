@@ -7,23 +7,23 @@ import (
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/shell"
 	"github.com/conejoninja/tesoro/transport"
-	"github.com/trezor/usbhid"
+	"github.com/trezor/trezord-go/usb/lowlevel"
 )
 
 func main() {
 	var client tesoro.Client
 	numberDevices := 0
 
-	var usbctx usbhid.Context
+	var usbctx lowlevel.Context
 
-	list, err := usbhid.Get_Device_List(usbctx)
+	list, err := lowlevel.Get_Device_List(usbctx)
 
 	if err != nil {
 		fmt.Println("Get_Device_List error", list, err)
 	}
 
 	defer func() {
-		usbhid.Free_Device_List(list, 1) // unlink devices
+		lowlevel.Free_Device_List(list, 1) // unlink devices
 	}()
 
 	paths := make(map[string]bool)
@@ -32,18 +32,18 @@ func main() {
 
 		// MATCH
 
-		c, err := usbhid.Get_Active_Config_Descriptor(dev)
+		c, err := lowlevel.Get_Active_Config_Descriptor(dev)
 		if err != nil {
 			fmt.Println("webusb - match - error getting config descriptor " + err.Error())
 		}
 		match := c.BNumInterfaces > 0 &&
 			c.Interface[0].Num_altsetting > 0 &&
-			c.Interface[0].Altsetting[0].BInterfaceClass == usbhid.CLASS_VENDOR_SPEC
+			c.Interface[0].Altsetting[0].BInterfaceClass == lowlevel.CLASS_VENDOR_SPEC
 
 		// END MATCH
 
 		if match {
-			dd, err := usbhid.Get_Device_Descriptor(dev)
+			dd, err := lowlevel.Get_Device_Descriptor(dev)
 			if err != nil {
 				continue
 			}
@@ -55,7 +55,7 @@ func main() {
 
 				path := ""
 				var ports [8]byte
-				p, err := usbhid.Get_Port_Numbers(dev, ports[:])
+				p, err := lowlevel.Get_Port_Numbers(dev, ports[:])
 				if err == nil {
 					path = "web" + hex.EncodeToString(p)
 				}
