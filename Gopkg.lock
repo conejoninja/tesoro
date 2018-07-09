@@ -23,7 +23,7 @@
   branch = "master"
   name = "github.com/trezor/trezord-go"
   packages = ["usb/lowlevel"]
-  revision = "b05ab402ce60a5116b686292a54c60fe5221a1a1"
+  revision = "2d224e6e52de1d14fbb31acbe7a377b77d943075"
 
 [[projects]]
   branch = "master"
