@@ -916,10 +916,10 @@ func (m *Failure) GetMessage() string {
 // @next Cancel
 type ButtonRequest struct {
 	Code                 *types.ButtonRequestType `protobuf:"varint,1,opt,name=code,enum=ButtonRequestType" json:"code,omitempty"`
-	Data                 *string            `protobuf:"bytes,2,opt,name=data" json:"data,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
-	XXX_unrecognized     []byte             `json:"-"`
-	XXX_sizecache        int32              `json:"-"`
+	Data                 *string                  `protobuf:"bytes,2,opt,name=data" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
+	XXX_unrecognized     []byte                   `json:"-"`
+	XXX_sizecache        int32                    `json:"-"`
 }
 
 func (m *ButtonRequest) Reset()         { *m = ButtonRequest{} }
@@ -999,9 +999,9 @@ var xxx_messageInfo_ButtonAck proto.InternalMessageInfo
 // @next Cancel
 type PinMatrixRequest struct {
 	Type                 *types.PinMatrixRequestType `protobuf:"varint,1,opt,name=type,enum=PinMatrixRequestType" json:"type,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
-	XXX_unrecognized     []byte                `json:"-"`
-	XXX_sizecache        int32                 `json:"-"`
+	XXX_NoUnkeyedLiteral struct{}                    `json:"-"`
+	XXX_unrecognized     []byte                      `json:"-"`
+	XXX_sizecache        int32                       `json:"-"`
 }
 
 func (m *PinMatrixRequest) Reset()         { *m = PinMatrixRequest{} }
@@ -1344,10 +1344,10 @@ func (m *GetPublicKey) GetCoinName() string {
 // @prev GetPublicKey
 type PublicKey struct {
 	Node                 *types.HDNodeType `protobuf:"bytes,1,req,name=node" json:"node,omitempty"`
-	Xpub                 *string     `protobuf:"bytes,2,opt,name=xpub" json:"xpub,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
+	Xpub                 *string           `protobuf:"bytes,2,opt,name=xpub" json:"xpub,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
 }
 
 func (m *PublicKey) Reset()         { *m = PublicKey{} }
@@ -1394,14 +1394,14 @@ func (m *PublicKey) GetXpub() string {
 // @next Address
 // @next Failure
 type GetAddress struct {
-	AddressN             []uint32                  `protobuf:"varint,1,rep,name=address_n,json=addressN" json:"address_n,omitempty"`
-	CoinName             *string                   `protobuf:"bytes,2,opt,name=coin_name,json=coinName,def=Bitcoin" json:"coin_name,omitempty"`
-	ShowDisplay          *bool                     `protobuf:"varint,3,opt,name=show_display,json=showDisplay" json:"show_display,omitempty"`
+	AddressN             []uint32                        `protobuf:"varint,1,rep,name=address_n,json=addressN" json:"address_n,omitempty"`
+	CoinName             *string                         `protobuf:"bytes,2,opt,name=coin_name,json=coinName,def=Bitcoin" json:"coin_name,omitempty"`
+	ShowDisplay          *bool                           `protobuf:"varint,3,opt,name=show_display,json=showDisplay" json:"show_display,omitempty"`
 	Multisig             *types.MultisigRedeemScriptType `protobuf:"bytes,4,opt,name=multisig" json:"multisig,omitempty"`
 	ScriptType           *types.InputScriptType          `protobuf:"varint,5,opt,name=script_type,json=scriptType,enum=InputScriptType,def=0" json:"script_type,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
-	XXX_unrecognized     []byte                    `json:"-"`
-	XXX_sizecache        int32                     `json:"-"`
+	XXX_NoUnkeyedLiteral struct{}                        `json:"-"`
+	XXX_unrecognized     []byte                          `json:"-"`
+	XXX_sizecache        int32                           `json:"-"`
 }
 
 func (m *GetAddress) Reset()         { *m = GetAddress{} }
@@ -1638,17 +1638,17 @@ var xxx_messageInfo_WipeDevice proto.InternalMessageInfo
 // @next Success
 // @next Failure
 type LoadDevice struct {
-	Mnemonic             *string     `protobuf:"bytes,1,opt,name=mnemonic" json:"mnemonic,omitempty"`
+	Mnemonic             *string           `protobuf:"bytes,1,opt,name=mnemonic" json:"mnemonic,omitempty"`
 	Node                 *types.HDNodeType `protobuf:"bytes,2,opt,name=node" json:"node,omitempty"`
-	Pin                  *string     `protobuf:"bytes,3,opt,name=pin" json:"pin,omitempty"`
-	PassphraseProtection *bool       `protobuf:"varint,4,opt,name=passphrase_protection,json=passphraseProtection" json:"passphrase_protection,omitempty"`
-	Language             *string     `protobuf:"bytes,5,opt,name=language,def=english" json:"language,omitempty"`
-	Label                *string     `protobuf:"bytes,6,opt,name=label" json:"label,omitempty"`
-	SkipChecksum         *bool       `protobuf:"varint,7,opt,name=skip_checksum,json=skipChecksum" json:"skip_checksum,omitempty"`
-	U2FCounter           *uint32     `protobuf:"varint,8,opt,name=u2f_counter,json=u2fCounter" json:"u2f_counter,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
+	Pin                  *string           `protobuf:"bytes,3,opt,name=pin" json:"pin,omitempty"`
+	PassphraseProtection *bool             `protobuf:"varint,4,opt,name=passphrase_protection,json=passphraseProtection" json:"passphrase_protection,omitempty"`
+	Language             *string           `protobuf:"bytes,5,opt,name=language,def=english" json:"language,omitempty"`
+	Label                *string           `protobuf:"bytes,6,opt,name=label" json:"label,omitempty"`
+	SkipChecksum         *bool             `protobuf:"varint,7,opt,name=skip_checksum,json=skipChecksum" json:"skip_checksum,omitempty"`
+	U2FCounter           *uint32           `protobuf:"varint,8,opt,name=u2f_counter,json=u2fCounter" json:"u2f_counter,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
 }
 
 func (m *LoadDevice) Reset()         { *m = LoadDevice{} }
@@ -2059,9 +2059,9 @@ func (m *RecoveryDevice) GetDryRun() bool {
 // @prev WordAck
 type WordRequest struct {
 	Type                 *types.WordRequestType `protobuf:"varint,1,opt,name=type,enum=WordRequestType" json:"type,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
 func (m *WordRequest) Reset()         { *m = WordRequest{} }
@@ -2144,13 +2144,13 @@ func (m *WordAck) GetWord() string {
 // @next MessageSignature
 // @next Failure
 type SignMessage struct {
-	AddressN             []uint32         `protobuf:"varint,1,rep,name=address_n,json=addressN" json:"address_n,omitempty"`
-	Message              []byte           `protobuf:"bytes,2,req,name=message" json:"message,omitempty"`
-	CoinName             *string          `protobuf:"bytes,3,opt,name=coin_name,json=coinName,def=Bitcoin" json:"coin_name,omitempty"`
+	AddressN             []uint32               `protobuf:"varint,1,rep,name=address_n,json=addressN" json:"address_n,omitempty"`
+	Message              []byte                 `protobuf:"bytes,2,req,name=message" json:"message,omitempty"`
+	CoinName             *string                `protobuf:"bytes,3,opt,name=coin_name,json=coinName,def=Bitcoin" json:"coin_name,omitempty"`
 	ScriptType           *types.InputScriptType `protobuf:"varint,4,opt,name=script_type,json=scriptType,enum=InputScriptType,def=0" json:"script_type,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
 func (m *SignMessage) Reset()         { *m = SignMessage{} }
@@ -2907,12 +2907,12 @@ type SimpleSignTx struct {
 	Inputs               []*types.TxInputType     `protobuf:"bytes,1,rep,name=inputs" json:"inputs,omitempty"`
 	Outputs              []*types.TxOutputType    `protobuf:"bytes,2,rep,name=outputs" json:"outputs,omitempty"`
 	Transactions         []*types.TransactionType `protobuf:"bytes,3,rep,name=transactions" json:"transactions,omitempty"`
-	CoinName             *string            `protobuf:"bytes,4,opt,name=coin_name,json=coinName,def=Bitcoin" json:"coin_name,omitempty"`
-	Version              *uint32            `protobuf:"varint,5,opt,name=version,def=1" json:"version,omitempty"`
-	LockTime             *uint32            `protobuf:"varint,6,opt,name=lock_time,json=lockTime,def=0" json:"lock_time,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
-	XXX_unrecognized     []byte             `json:"-"`
-	XXX_sizecache        int32              `json:"-"`
+	CoinName             *string                  `protobuf:"bytes,4,opt,name=coin_name,json=coinName,def=Bitcoin" json:"coin_name,omitempty"`
+	Version              *uint32                  `protobuf:"varint,5,opt,name=version,def=1" json:"version,omitempty"`
+	LockTime             *uint32                  `protobuf:"varint,6,opt,name=lock_time,json=lockTime,def=0" json:"lock_time,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
+	XXX_unrecognized     []byte                   `json:"-"`
+	XXX_sizecache        int32                    `json:"-"`
 }
 
 func (m *SimpleSignTx) Reset()         { *m = SimpleSignTx{} }
@@ -2996,9 +2996,9 @@ type TxRequest struct {
 	RequestType          *types.RequestType             `protobuf:"varint,1,opt,name=request_type,json=requestType,enum=RequestType" json:"request_type,omitempty"`
 	Details              *types.TxRequestDetailsType    `protobuf:"bytes,2,opt,name=details" json:"details,omitempty"`
 	Serialized           *types.TxRequestSerializedType `protobuf:"bytes,3,opt,name=serialized" json:"serialized,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
+	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
+	XXX_unrecognized     []byte                         `json:"-"`
+	XXX_sizecache        int32                          `json:"-"`
 }
 
 func (m *TxRequest) Reset()         { *m = TxRequest{} }
@@ -3052,9 +3052,9 @@ func (m *TxRequest) GetSerialized() *types.TxRequestSerializedType {
 // @next TxRequest
 type TxAck struct {
 	Tx                   *types.TransactionType `protobuf:"bytes,1,opt,name=tx" json:"tx,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
 func (m *TxAck) Reset()         { *m = TxAck{} }
@@ -3471,12 +3471,12 @@ func (m *EthereumMessageSignature) GetSignature() []byte {
 // @next Failure
 type SignIdentity struct {
 	Identity             *types.IdentityType `protobuf:"bytes,1,opt,name=identity" json:"identity,omitempty"`
-	ChallengeHidden      []byte        `protobuf:"bytes,2,opt,name=challenge_hidden,json=challengeHidden" json:"challenge_hidden,omitempty"`
-	ChallengeVisual      *string       `protobuf:"bytes,3,opt,name=challenge_visual,json=challengeVisual" json:"challenge_visual,omitempty"`
-	EcdsaCurveName       *string       `protobuf:"bytes,4,opt,name=ecdsa_curve_name,json=ecdsaCurveName" json:"ecdsa_curve_name,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
-	XXX_unrecognized     []byte        `json:"-"`
-	XXX_sizecache        int32         `json:"-"`
+	ChallengeHidden      []byte              `protobuf:"bytes,2,opt,name=challenge_hidden,json=challengeHidden" json:"challenge_hidden,omitempty"`
+	ChallengeVisual      *string             `protobuf:"bytes,3,opt,name=challenge_visual,json=challengeVisual" json:"challenge_visual,omitempty"`
+	EcdsaCurveName       *string             `protobuf:"bytes,4,opt,name=ecdsa_curve_name,json=ecdsaCurveName" json:"ecdsa_curve_name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
 }
 
 func (m *SignIdentity) Reset()         { *m = SignIdentity{} }
@@ -3594,11 +3594,11 @@ func (m *SignedIdentity) GetSignature() []byte {
 // @next Failure
 type GetECDHSessionKey struct {
 	Identity             *types.IdentityType `protobuf:"bytes,1,opt,name=identity" json:"identity,omitempty"`
-	PeerPublicKey        []byte        `protobuf:"bytes,2,opt,name=peer_public_key,json=peerPublicKey" json:"peer_public_key,omitempty"`
-	EcdsaCurveName       *string       `protobuf:"bytes,3,opt,name=ecdsa_curve_name,json=ecdsaCurveName" json:"ecdsa_curve_name,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
-	XXX_unrecognized     []byte        `json:"-"`
-	XXX_sizecache        int32         `json:"-"`
+	PeerPublicKey        []byte              `protobuf:"bytes,2,opt,name=peer_public_key,json=peerPublicKey" json:"peer_public_key,omitempty"`
+	EcdsaCurveName       *string             `protobuf:"bytes,3,opt,name=ecdsa_curve_name,json=ecdsaCurveName" json:"ecdsa_curve_name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
 }
 
 func (m *GetECDHSessionKey) Reset()         { *m = GetECDHSessionKey{} }
@@ -4020,15 +4020,15 @@ type NEMSignTx struct {
 	Transaction           *types.NEMTransactionCommon     `protobuf:"bytes,1,opt,name=transaction" json:"transaction,omitempty"`
 	Multisig              *types.NEMTransactionCommon     `protobuf:"bytes,2,opt,name=multisig" json:"multisig,omitempty"`
 	Transfer              *types.NEMTransfer              `protobuf:"bytes,3,opt,name=transfer" json:"transfer,omitempty"`
-	Cosigning             *bool                     `protobuf:"varint,4,opt,name=cosigning" json:"cosigning,omitempty"`
+	Cosigning             *bool                           `protobuf:"varint,4,opt,name=cosigning" json:"cosigning,omitempty"`
 	ProvisionNamespace    *types.NEMProvisionNamespace    `protobuf:"bytes,5,opt,name=provision_namespace,json=provisionNamespace" json:"provision_namespace,omitempty"`
 	MosaicCreation        *types.NEMMosaicCreation        `protobuf:"bytes,6,opt,name=mosaic_creation,json=mosaicCreation" json:"mosaic_creation,omitempty"`
 	SupplyChange          *types.NEMMosaicSupplyChange    `protobuf:"bytes,7,opt,name=supply_change,json=supplyChange" json:"supply_change,omitempty"`
 	AggregateModification *types.NEMAggregateModification `protobuf:"bytes,8,opt,name=aggregate_modification,json=aggregateModification" json:"aggregate_modification,omitempty"`
 	ImportanceTransfer    *types.NEMImportanceTransfer    `protobuf:"bytes,9,opt,name=importance_transfer,json=importanceTransfer" json:"importance_transfer,omitempty"`
-	XXX_NoUnkeyedLiteral  struct{}                  `json:"-"`
-	XXX_unrecognized      []byte                    `json:"-"`
-	XXX_sizecache         int32                     `json:"-"`
+	XXX_NoUnkeyedLiteral  struct{}                        `json:"-"`
+	XXX_unrecognized      []byte                          `json:"-"`
+	XXX_sizecache         int32                           `json:"-"`
 }
 
 func (m *NEMSignTx) Reset()         { *m = NEMSignTx{} }
@@ -4558,19 +4558,19 @@ var xxx_messageInfo_DebugLinkGetState proto.InternalMessageInfo
 // Response: Device current state
 // @prev DebugLinkGetState
 type DebugLinkState struct {
-	Layout               []byte      `protobuf:"bytes,1,opt,name=layout" json:"layout,omitempty"`
-	Pin                  *string     `protobuf:"bytes,2,opt,name=pin" json:"pin,omitempty"`
-	Matrix               *string     `protobuf:"bytes,3,opt,name=matrix" json:"matrix,omitempty"`
-	Mnemonic             *string     `protobuf:"bytes,4,opt,name=mnemonic" json:"mnemonic,omitempty"`
+	Layout               []byte            `protobuf:"bytes,1,opt,name=layout" json:"layout,omitempty"`
+	Pin                  *string           `protobuf:"bytes,2,opt,name=pin" json:"pin,omitempty"`
+	Matrix               *string           `protobuf:"bytes,3,opt,name=matrix" json:"matrix,omitempty"`
+	Mnemonic             *string           `protobuf:"bytes,4,opt,name=mnemonic" json:"mnemonic,omitempty"`
 	Node                 *types.HDNodeType `protobuf:"bytes,5,opt,name=node" json:"node,omitempty"`
-	PassphraseProtection *bool       `protobuf:"varint,6,opt,name=passphrase_protection,json=passphraseProtection" json:"passphrase_protection,omitempty"`
-	ResetWord            *string     `protobuf:"bytes,7,opt,name=reset_word,json=resetWord" json:"reset_word,omitempty"`
-	ResetEntropy         []byte      `protobuf:"bytes,8,opt,name=reset_entropy,json=resetEntropy" json:"reset_entropy,omitempty"`
-	RecoveryFakeWord     *string     `protobuf:"bytes,9,opt,name=recovery_fake_word,json=recoveryFakeWord" json:"recovery_fake_word,omitempty"`
-	RecoveryWordPos      *uint32     `protobuf:"varint,10,opt,name=recovery_word_pos,json=recoveryWordPos" json:"recovery_word_pos,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
+	PassphraseProtection *bool             `protobuf:"varint,6,opt,name=passphrase_protection,json=passphraseProtection" json:"passphrase_protection,omitempty"`
+	ResetWord            *string           `protobuf:"bytes,7,opt,name=reset_word,json=resetWord" json:"reset_word,omitempty"`
+	ResetEntropy         []byte            `protobuf:"bytes,8,opt,name=reset_entropy,json=resetEntropy" json:"reset_entropy,omitempty"`
+	RecoveryFakeWord     *string           `protobuf:"bytes,9,opt,name=recovery_fake_word,json=recoveryFakeWord" json:"recovery_fake_word,omitempty"`
+	RecoveryWordPos      *uint32           `protobuf:"varint,10,opt,name=recovery_word_pos,json=recoveryWordPos" json:"recovery_word_pos,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
 }
 
 func (m *DebugLinkState) Reset()         { *m = DebugLinkState{} }

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/zserge/hid"
-	)
+)
 
 type TransportHID struct {
 	device hid.Device
