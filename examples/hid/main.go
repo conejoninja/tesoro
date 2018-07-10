@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 
+	"github.com/conejoninja/hid"
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/shell"
 	"github.com/conejoninja/tesoro/transport"
-	"github.com/zserge/hid"
 )
 
 func main() {

@@ -8,11 +8,11 @@ import (
 
 	"crypto/sha256"
 	"encoding/hex"
+	"github.com/conejoninja/hid"
 	"github.com/conejoninja/tesoro"
 	"github.com/conejoninja/tesoro/pb/messages"
 	"github.com/conejoninja/tesoro/tests/common"
 	"github.com/conejoninja/tesoro/transport"
-	"github.com/zserge/hid"
 	"time"
 )
 

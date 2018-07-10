@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/zserge/hid"
+	"github.com/conejoninja/hid"
 )
 
 type TransportHID struct {
