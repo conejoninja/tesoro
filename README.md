@@ -2,6 +2,12 @@ TESORO [![Build Status](https://travis-ci.org/conejoninja/tesoro.svg?branch=mast
 ======
 Go package to work with [TREZOR devices](http://bitcointrezor.com/). This repository is an unofficial package written in Go (golang), for any official package, code or tool, please go to the official [TREZOR repository](https://github.com/trezor)
 
+
+# ⚠️ Important notice ⚠️
+
+This project started as a Go library for TREZOR devices that I used for personal projects, **it's no longer mantained**. You could use the official [trezord-go as a go library](https://github.com/trezor/trezord-go/pull/147).
+
+
 ## What is TREZOR?
 
 TREZOR is a single purpose device which allows you to make secure Bitcoin transactions. With TREZOR, transactions are completely safe even when initiated on a compromised or vulnerable computer.
@@ -14,8 +20,6 @@ $ go get github.com/conejoninja/tesoro
 
 ## Examples
 *examples/hid*: only compatible with Linux (and Linux based), pure go, no libusb dependency.
- 
-*examples/webusb*: compatible with Trezor One and model T, should be able to run in Linux, Mac OSX and Windows. It depends on libusb. 
 
 ## Supported methods
 *Some**

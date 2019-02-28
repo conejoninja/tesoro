@@ -1,6 +1,8 @@
 package hid
 
 import (
+	"io/ioutil"
+	"log"
 	"time"
 )
 
@@ -30,7 +32,7 @@ type Device interface {
 	GetReport(int) ([]byte, error)
 	Read(size int, ms time.Duration) ([]byte, error)
 	Write(data []byte, ms time.Duration) (int, error)
-	GetEndpoints() (int,int)
+	GetEndpoints() (int, int)
 	SetEndpoint(int)
 	SetEpIn(int)
 	SetEpOut(int)
@@ -40,4 +42,8 @@ type Device interface {
 	SetInputPS(uint16)
 	SetOutputPS(uint16)
 	SetPath(string)
+	Ctrl(rtype, req, val, index int, data []byte, t int) (int, error)
 }
+
+// Default Logger setting
+var Logger = log.New(ioutil.Discard, "hid", log.LstdFlags)

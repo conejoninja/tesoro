@@ -5,13 +5,11 @@ import (
 	"encoding/binary"
 	"errors"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"syscall"
 	"time"
 	"unsafe"
-	"fmt"
 )
 
 type usbDevice struct {
@@ -55,7 +53,6 @@ func (hid *usbDevice) Info() Info {
 }
 
 func (hid *usbDevice) ioctl(n uint32, arg interface{}) (int, error) {
-	fmt.Println("IOCTL", hid.fd)
 	b := new(bytes.Buffer)
 	if err := binary.Write(b, binary.LittleEndian, arg); err != nil {
 		return -1, err
@@ -73,7 +70,7 @@ func (hid *usbDevice) claim() error {
 		IoctlCode: USBDEVFS_DISCONNECT,
 		Data:      0,
 	}); r == -1 {
-		log.Println("driver disconnect failed:", r, errno)
+		Logger.Println("driver disconnect failed:", r, errno)
 	}
 
 	if r, errno := hid.ioctl(USBDEVFS_CLAIM, &ifno); r == -1 {
@@ -93,9 +90,13 @@ func (hid *usbDevice) release() error {
 		IoctlCode: USBDEVFS_CONNECT,
 		Data:      0,
 	}); r == -1 {
-		log.Println("driver connect failed:", r, errno)
+		Logger.Println("driver connect failed:", r, errno)
 	}
 	return nil
+}
+
+func (hid *usbDevice) Ctrl(rtype, req, val, index int, data []byte, t int) (int, error) {
+	return hid.ctrl(rtype, req, val, index, data, t)
 }
 
 func (hid *usbDevice) ctrl(rtype, req, val, index int, data []byte, t int) (int, error) {
@@ -338,7 +339,7 @@ func UsbWalk(cb func(Device)) {
 			return nil
 		}
 		if err := walker(f, cb); err != nil {
-			log.Println("UsbWalk: ", err)
+			Logger.Println("UsbWalk: ", err)
 		}
 		return nil
 	})

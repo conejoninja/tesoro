@@ -11,25 +11,19 @@
   branch = "master"
   name = "github.com/conejoninja/hid"
   packages = ["."]
-  revision = "26f3555a38d8cdb2ba17ea83e56915e32e05d54a"
+  revision = "3a959b87ebefc18767a31fa567eea402eb37239e"
 
 [[projects]]
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
-  version = "v1.1.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/trezor/trezord-go"
-  packages = ["usb/lowlevel"]
-  revision = "2d224e6e52de1d14fbb31acbe7a377b77d943075"
+  revision = "c823c79ea1570fb5ff454033735a8e68575d1d0f"
+  version = "v1.3.0"
 
 [[projects]]
   branch = "master"
   name = "github.com/zserge/hid"
   packages = ["."]
-  revision = "b5855a5a090afe7e008d85178d979c8d1a6185b5"
+  revision = "e1626f1782f3077bc4e96a09c3112d664b7efa11"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -47,6 +41,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f985bbe91b1d8ce8ab940e7fcbf0fc14b579dbeef5002486d7b22cb5ca072458"
+  inputs-digest = "9e81e060bf17b996419b99ca88a9ad3628f4df01bff394de34b5e59a4905670f"
   solver-name = "gps-cdcl"
   solver-version = 1

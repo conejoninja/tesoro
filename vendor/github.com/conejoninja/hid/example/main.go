@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/chzyer/readline"
-	"github.com/zserge/hid"
+	"github.com/conejoninja/hid"
 )
 
 func shell(device hid.Device) {
